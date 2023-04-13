@@ -33,7 +33,7 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
   const [history, setHistory] = useState([song]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
-  const selectedTrack = song.tracks[selectedTrackIndex]
+  const selectedTrack = song?.tracks[selectedTrackIndex]
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -59,9 +59,9 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
       };
       const note = keyToNote[event.key];
       if (note && selectedCell !== null) {
-        const trackIndex = Math.floor(selectedCell / song.tracks[0].notes.length);
-        const noteIndex = selectedCell % song.tracks[0].notes.length;
-        const track = song.tracks[trackIndex];
+        const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
+        const noteIndex = selectedCell % song?.tracks[0].notes.length;
+        const track = song?.tracks[trackIndex];
         const notes = [...track.notes];
         const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
         noteObj.time = 100;
@@ -69,9 +69,9 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
         noteObj.noteName = note;
         notes[noteIndex] = noteObj;
         const updatedTracks = [
-          ...song.tracks.slice(0, trackIndex),
+          ...song?.tracks.slice(0, trackIndex),
           { ...track, notes },
-          ...song.tracks.slice(trackIndex + 1),
+          ...song?.tracks.slice(trackIndex + 1),
         ];
         const newSong = { ...song, tracks: updatedTracks };
         setSong(newSong);
@@ -96,9 +96,9 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
   //         if (input) {
   //           input.addListener('noteon', 'all', (event) => {
   //             const note = event.note.name + event.note.octave;
-  //             const trackIndex = Math.floor(selectedCell / song.tracks[0].notes.length);
-  //             const noteIndex = selectedCell % song.tracks[0].notes.length;
-  //             const track = song.tracks[trackIndex];
+  //             const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
+  //             const noteIndex = selectedCell % song?.tracks[0].notes.length;
+  //             const track = song?.tracks[trackIndex];
   //             const notes = [...track.notes];
   //             const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
   //             noteObj.time = 100;
@@ -106,9 +106,9 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
   //             noteObj.noteName = note;
   //             notes[noteIndex] = noteObj;
   //             const updatedTracks = [
-  //               ...song.tracks.slice(0, trackIndex),
+  //               ...song?.tracks.slice(0, trackIndex),
   //               { ...track, notes },
-  //               ...song.tracks.slice(trackIndex + 1),
+  //               ...song?.tracks.slice(trackIndex + 1),
   //             ];
   //             const newSong = { ...song, tracks: updatedTracks };
   //             setSong(newSong);
@@ -123,9 +123,9 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
 
   const handleCellClick = (index) => {
     if (selectedCell === index) {
-      const trackIndex = Math.floor(selectedCell / song.tracks[0].notes.length);
-      const noteIndex = selectedCell % song.tracks[0].notes.length;
-      const track = song.tracks[trackIndex];
+      const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
+      const noteIndex = selectedCell % song?.tracks[0].notes.length;
+      const track = song?.tracks[trackIndex];
       const notes = [...track.notes];
       const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
       noteObj.time = 0;
@@ -133,9 +133,9 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
       noteObj.noteName = '';
       notes[noteIndex] = noteObj;
       const updatedTracks = [
-      ...song.tracks.slice(0, trackIndex),
+      ...song?.tracks.slice(0, trackIndex),
       { ...track, notes },
-      ...song.tracks.slice(trackIndex + 1),
+      ...song?.tracks.slice(trackIndex + 1),
       ];
       const newSong = { ...song, tracks: updatedTracks };
       setSong(newSong);
@@ -180,7 +180,7 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
       
       return (
         <GridWrap id="grid">
-          {song.tracks[selectedTrackIndex].notes.map((note, noteIndex) => {
+          {song?.tracks[selectedTrackIndex].notes.map((note, noteIndex) => {
         const index = selectedTrackIndex * selectedTrack.notes.length + noteIndex;
         const filled = note && note.time === 100;
         const isSelected = selectedCell === index;
