@@ -1,0 +1,280 @@
+.share-container {
+  margin: 16px 0 32px;
+  text-align: right;
+}
+
+.main {
+  padding: 16px;
+}
+
+.prevent-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+  
+  touch-action: manipulation;
+}
+
+.container-with-border {
+  margin: 12px 0;
+  padding: 32px;
+  border: 1px solid #000;
+}
+
+.scene {
+  background-color: #000;
+  color: #fff;
+  width: 100%;
+  position: relative;
+}
+
+.music-title-card {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+}
+
+.band-mates {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.band-mate {
+  display: inline-block;
+  
+}
+
+.band-mate .name {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.band-mate:not(:last-of-type) {
+  margin-right: 132px;
+}
+
+.piano-keys {
+  text-align: center;
+}
+
+.piano-key  {
+  color: transparent;
+  display: inline-block;
+  margin: 5px;
+  border: 1px solid #000;
+  border-radius: 0 0 5px 5px;
+  cursor: pointer;
+  margin: 23px -9px;
+}
+
+.piano-key.white {
+  background-color: white;
+  width: 50px;
+  height: 150px;
+}
+
+.piano-key.black {
+  background-color: black;
+  width: 30px;
+  height: 100px;
+  margin-left: -15px;
+  margin-right: -15px;
+  z-index: 1;
+  /* position: relative; */
+  position: absolute;
+  /* transform: translateY(-33px); */
+  transform: translate(-8px, 0px);
+}
+
+.piano-key.black:before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 50%;
+  background-color: black;
+  z-index: -1;
+}
+
+.piano-key.black:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: black;
+  z-index: -1;
+}
+
+.piano-key:focus {
+  outline: 0;
+}
+
+
+
+.sheet-music {
+position: relative;
+width: 100%;
+height: 200px;
+margin-top: 20px;
+}
+
+.staff {
+position: absolute;
+top: 50%;
+left: 0;
+width: 100%;
+height: 2px;
+background-color: black;
+transform: translateY(-50%);
+}
+
+.notes {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+}
+
+.note {
+position: absolute;
+bottom: 0;
+width: 20px;
+height: 20px;
+background-color: black;
+border-radius: 50%;
+transform: translateX(-50%);
+}
+
+.note.c {
+left: 10%;
+}
+
+.note.c-sharp {
+left: 15%;
+}
+
+.note.d {
+left: 20%;
+}
+
+.note.d-sharp {
+left: 25%;
+}
+
+.note.e {
+left: 30%;
+}
+
+.note.f {
+left: 35%;
+}
+
+.note.f-sharp {
+left: 40%;
+}
+
+.note.g {
+left: 45%;
+}
+
+.note.g-sharp {
+left: 50%;
+}
+
+.note.a {
+left: 55%;
+}
+
+.note.a-sharp {
+left: 60%;
+}
+
+.note.b {
+left: 65%;
+}
+
+.note.high-c {
+left: 70%;
+}
+
+.note.high-c-sharp {
+left: 75%;
+}
+
+.note.high-d {
+left: 80%;
+}
+
+.note.high-d-sharp {
+left: 85%;
+}
+
+.note.high-e {
+left: 90%;
+}
+
+.note.high-f {
+left: 95%;
+}
+
+.note.high-f-sharp {
+left: 100%;
+}
+
+.note.high-g {
+left: 105%;
+}
+
+.note.high-g-sharp {
+left: 110%;
+}
+
+.note.high-a {
+left: 115%;
+}
+
+.playhead {
+position: absolute;
+top: 0;
+bottom: 0;
+width: 2px;
+background-color: red;
+transform: translateX(-50%);
+}
+
+.grid {
+display: grid;
+grid-template-rows: repeat(4, 1fr);
+grid-gap: 5px;
+margin-top: 20px;
+}
+
+.row {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+}
+
+.cell {
+flex: 1;
+background-color: #eee;
+border: 1px solid #ccc;
+height: 50px;
+cursor: pointer;
+}
+
+.cell.highlighted {
+background-color: #ff0;
+}
+
+.cell.active {
+background-color: #f00;
+}
