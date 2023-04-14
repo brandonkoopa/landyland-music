@@ -133,10 +133,30 @@ export default function Home() {
   const [bpm, setBpm] = useState(120);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedNotes, setRecordedNotes] = useState([]);
+  const [songDataFromServer, setSongDataFromServer] = useState({});
   
   const [playButtonIcon, setPlayButtonIcon] = useState('▶');
   
   let playheadPosition = 0;
+
+  useEffect(() => {
+    init()
+  }, []);
+
+  const init = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const songId = urlParams.get('song_id');
+
+    if (songId) {
+      fetch(`https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev/song/${songId}`)
+        .then(response => response.json())
+        .then(data => {
+          // process data and update UI elements
+          setSong({ ...song, title: data.title });
+        })
+        .catch(error => console.log(error));
+    }
+  }
 
   useEffect(() => {
     setPlayButtonIcon(isPlaying ? '■' : '▶');
@@ -359,6 +379,8 @@ export default function Home() {
 
   return (
     <main className="main" onKeyDown={handleKeyDown}>
+      <h2>Title: {song?.title}</h2>
+      {}
       {/* <div className="prevent-select share-container">
         <button id="share">Share</button>
       </div> */}
