@@ -16,7 +16,7 @@ const GridWrap = styled.div`
 const Cell = styled.button`
   width: 64px;
   height: 64px;
-  border: 2px solid ${({ selected }) => (selected ? '#ff0' : '#fff')};
+  border: 2px solid ${({ selected }) => (selected ? '#000' : '#000')};
   border-radius: 10px;
   font-weight: 800;
   background-color: ${({ selected }) => (selected ? 'yellow' : 'transparent')};

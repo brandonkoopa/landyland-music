@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import * as Tone from 'tone';
 import Image from 'next/image'
 import PianoKeys from './ui_instruments/PianoKeys';
 // import { Inter } from 'next/font/google'
@@ -128,7 +129,6 @@ export default function Home() {
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
   
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioCtx, setAudioCtx] = useState(null);
   const [waveform, setWaveform] = useState('sine');
   const [bpm, setBpm] = useState(120);
   const [isRecording, setIsRecording] = useState(false);
@@ -137,11 +137,6 @@ export default function Home() {
   const [playButtonIcon, setPlayButtonIcon] = useState('▶');
   
   let playheadPosition = 0;
-
-  useEffect(() => {
-    const newAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    setAudioCtx(newAudioCtx);
-  }, []);
 
   useEffect(() => {
     setPlayButtonIcon(isPlaying ? '■' : '▶');
@@ -172,35 +167,12 @@ export default function Home() {
   
           // function to play note
           function playNote(frequency) {
-            console.log('playNote(' + frequency + ')')
-              // create oscillator node
-              var oscillator = audioCtx.createOscillator();
-              // oscillator.type = waveform; // set waveform type
-              // oscillator.type = 'pulse';
-              // oscillator.width.value = 0.5; // 50% duty cycle
-              oscillator.frequency.value = frequency;
+            //create a synth and connect it to the main output (your speakers)
+            const synth = new Tone.Synth().toDestination();
 
-//               const dutyCycle = 0.5; // 50% duty cycle
-// const real = new Float32Array([0, 1]);
-// const imag = new Float32Array([0, 0]);
-// const waveTable = audioCtx.createPeriodicWave(real, imag);
-// oscillator.setPeriodicWave(waveTable);
-// oscillator.frequency.value = 240; // set the frequency to 440 Hz
-// oscillator.connect(audioCtx.destination);
-  
-              // create gain node for volume control
-              var gainNode = audioCtx.createGain();
-              gainNode.gain.setValueAtTime(0.75, audioCtx.currentTime); // set initial volume
-              gainNode.connect(audioCtx.destination);
-  
-              // connect oscillator to gain node
-              oscillator.connect(gainNode);
-  
-              // start and fade out oscillator
-              oscillator.start();
-              gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); // fade out over 0.5 seconds
-              oscillator.stop(audioCtx.currentTime + 0.5); // stop after 0.5 seconds
-  
+            //play a middle 'C' for the duration of an 8th note
+            synth.triggerAttackRelease(frequency, "8n");
+
               // record note if recording is enabled
               if (isRecording) {
                   recordedNotes.push({
