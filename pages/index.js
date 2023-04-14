@@ -8,6 +8,22 @@ import bandMates from './json/band-mates.json';
 import exampleSong from './json/example-song.json'
 import ProgramGrid from './ProgramGrid'
 import WaveformButton from './components/WaveformButton'
+import { Button, Input } from 'antd';
+const { Search } = Input;
+
+const SongTitle = styled.h2`
+  font-size: 23px;
+`
+
+const SongInfoRow = styled.div`
+  display: grid;
+  column-gap: 16px;
+  grid-template-columns: auto auto auto;
+`
+
+const SongDetail = styled.span`
+  font-size: 16px;
+`
 
 const PlayButton = styled.button`
   width: 60px;
@@ -124,20 +140,43 @@ const RecordingButton = styled.button`
   }
 `;
 
+const SearchRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 64px;
+`
+
+const SearchResultsContainer = styled.div`
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  z-index: 100;
+  padding: 32px;
+`
+
+const SearchResult = styled.li`
+  font-size: 16px;
+`
+
 export default function Home() {
-  const [song, setSong] = useState(exampleSong);
-  const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
-  
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [waveform, setWaveform] = useState('sine');
-  const [bpm, setBpm] = useState(120);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedNotes, setRecordedNotes] = useState([]);
-  const [songDataFromServer, setSongDataFromServer] = useState({});
-  
-  const [playButtonIcon, setPlayButtonIcon] = useState('▶');
+  const [song, setSong] = useState(exampleSong)
+  const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [waveform, setWaveform] = useState('sine')
+  const [bpm, setBpm] = useState(120)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordedNotes, setRecordedNotes] = useState([])
+  const [songDataFromServer, setSongDataFromServer] = useState({})
+  const [isSearching, setIsSearching] = useState(false)
+  const [playButtonIcon, setPlayButtonIcon] = useState('▶')
+  const [searchResults, setSearchResults] = useState([])
+  const [isShowingSearchResults, setIsShowingSearchResults] = useState(false)
   
   let playheadPosition = 0;
+
+  const apiBaseUrl = 'https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev'
 
   useEffect(() => {
     init()
@@ -148,7 +187,7 @@ export default function Home() {
     const songId = urlParams.get('song_id');
 
     if (songId) {
-      fetch(`https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev/song/${songId}`)
+      fetch(`${apiBaseUrl}/song/${songId}`)
         .then(response => response.json())
         .then(data => {
           // process data and update UI elements
@@ -377,9 +416,71 @@ export default function Home() {
     setSong(newSong);
   }
 
+  function handleSearch(value) {
+    if (value === '') { return }
+
+    setIsSearching(true);
+
+    fetch(`${apiBaseUrl}/songs?title=${value}`)
+      .then(response => response.json())
+      .then(data => {
+        // do something with the response data
+        setIsSearching(false);
+
+        setSearchResults(data)
+
+        setIsShowingSearchResults(true)
+
+        // if (data.length === 1) {
+        //   goToPageBySongId(data[0].id)
+        // }
+      })
+      .catch(error => {
+        // handle error
+        setIsSearching(false);
+      });
+  }
+
+  const goToPageBySongId = songId => {
+    window.location.href = `/?song_id=${songId}`
+  }
+
   return (
     <main className="main" onKeyDown={handleKeyDown}>
-      <h2>Title: {song?.title}</h2>
+      <SearchRow>
+        <Search
+          allowClear
+          placeholder="Search music"
+          loading={isSearching}
+          onSearch={handleSearch}
+        />
+        { isShowingSearchResults &&
+        <Button type="link" onClick={() => {setIsShowingSearchResults(false)}}>
+          Cancel
+        </Button>
+        }
+      </SearchRow>
+      { isShowingSearchResults &&
+      <SearchResultsContainer>
+        <h3>Search results</h3>
+        <ul>
+        {searchResults.map((result, index) => (
+          <SearchResult key={index}
+            onClick={() => { goToPageBySongId(result.id) }}
+          >
+            {result.title}
+          </SearchResult>
+        ))}
+        </ul>
+      </SearchResultsContainer>
+      }
+      <SongTitle>Title: {song?.title}</SongTitle>
+      <SongInfoRow>
+        <SongDetail>Key: {song.keyLetter}</SongDetail>
+        <SongDetail> - </SongDetail>
+
+        <SongDetail>BPM: {song.bpm}</SongDetail>
+      </SongInfoRow>
       {}
       {/* <div className="prevent-select share-container">
         <button id="share">Share</button>
