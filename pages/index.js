@@ -6,13 +6,30 @@ import PianoKeys from './ui_instruments/PianoKeys';
 // import { Inter } from 'next/font/google'
 import bandMates from './json/band-mates.json';
 import exampleSong from './json/example-song.json'
+import emtpySong from './json/empty-song.json'
 import ProgramGrid from './ProgramGrid'
 import WaveformButton from './components/WaveformButton'
 import { Button, Input } from 'antd';
 const { Search } = Input;
 
+const Main = styled.main`
+  background-color: #ebebeb;
+  color: #000x;
+`
+
+const Row = styled.div`
+  align-items: center;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 32px;
+`
+
+const Col = styled.div`
+  
+`
+
 const SongTitle = styled.h2`
-  font-size: 23px;
+  font-size: 16px;
 `
 
 const SongInfoRow = styled.div`
@@ -143,55 +160,84 @@ const RecordingButton = styled.button`
 const SearchRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 64px;
+  width: 100%;
 `
 
 const SearchResultsContainer = styled.div`
+  background-color: #ebebeb;
+  color: #000;
   position: absolute;
   top: 64px;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #fff;
   z-index: 100;
   padding: 32px;
 `
 
 const SearchResult = styled.li`
+  color: #64A5FF;
   font-size: 16px;
+  list-style-type: none; /* Remove bullets */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margins */
 `
 
 export default function Home() {
   const [song, setSong] = useState(exampleSong)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [waveform, setWaveform] = useState('sine')
   const [bpm, setBpm] = useState(120)
   const [isRecording, setIsRecording] = useState(false)
   const [recordedNotes, setRecordedNotes] = useState([])
-  const [songDataFromServer, setSongDataFromServer] = useState({})
+  const [songLatestFromServer, setSongLatestFromServer] = useState({})
   const [isSearching, setIsSearching] = useState(false)
   const [playButtonIcon, setPlayButtonIcon] = useState('▶')
   const [searchResults, setSearchResults] = useState([])
+  const [synth, setSynth] = useState(null)
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false)
-  
+
   let playheadPosition = 0;
 
   const apiBaseUrl = 'https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev'
 
   useEffect(() => {
-    init()
+    loadSongFromUrl()
   }, []);
 
-  const init = () => {
+  useEffect(() => {
+    console.log('--------')
+    console.log('song : ', song)
+    console.log('songLatestFromServer : ', songLatestFromServer)
+    console.log('--------')
+  }, [song]);
+
+  const loadSongFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const songId = urlParams.get('song_id');
+    loadSongFromServerById(songId)
+  }
 
+  const loadSongFromServerById = (songId) => {
     if (songId) {
       fetch(`${apiBaseUrl}/song/${songId}`)
         .then(response => response.json())
-        .then(data => {
+        .then(songData => {
           // process data and update UI elements
-          setSong({ ...song, title: data.title });
+          // setSong({ ...song, title: data.title });
+
+          // const newTracks = []
+
+          // const songSet = {
+          //   ...song,
+          //   title: songData.title,
+          //   tracks: songData.tracks || emtpySong
+          // }
+          // const toLoad = songData.tracks ? songToLoad : emtpySong
+          setSong({...songData}) // no notes? load array of empty objects
+          setSongLatestFromServer({...songData})
         })
         .catch(error => console.log(error));
     }
@@ -201,99 +247,102 @@ export default function Home() {
     setPlayButtonIcon(isPlaying ? '■' : '▶');
   }, [isPlaying]);
   
-          var keyMap = {
-              'a': 261.63, // c
-              'w': 277.18, // c-sharp
-              's': 293.66, // d
-              'e': 311.13, // d-sharp
-              'd': 329.63, // e
-              'f': 349.23, // f
-              't': 369.99, // f-sharp
-              'g': 392.00, // g
-              'y': 415.30, // g-sharp
-              'h': 440.00, // a
-              'u': 466.16, // a-sharp
-              'j': 493.88, // b
-              'k': 523.25, // high-c
-              'o': 554.37, // high-c-sharp
-              'l': 587.33, // high-d
-              'p': 622.25, // high-d-sharp
-              ';': 659.25, // high-e
-              '\'': 523.25, // high-c
-              '[': 554.37, // high-c-sharp
-              ']': 493.88 // b
-              };
-  
-          // function to play note
-          function playNote(frequency) {
-            //create a synth and connect it to the main output (your speakers)
-            const synth = new Tone.Synth().toDestination();
+  var keyMap = {
+      'a': 261.63, // c
+      'w': 277.18, // c-sharp
+      's': 293.66, // d
+      'e': 311.13, // d-sharp
+      'd': 329.63, // e
+      'f': 349.23, // f
+      't': 369.99, // f-sharp
+      'g': 392.00, // g
+      'y': 415.30, // g-sharp
+      'h': 440.00, // a
+      'u': 466.16, // a-sharp
+      'j': 493.88, // b
+      'k': 523.25, // high-c
+      'o': 554.37, // high-c-sharp
+      'l': 587.33, // high-d
+      'p': 622.25, // high-d-sharp
+      ';': 659.25, // high-e
+      '\'': 523.25, // high-c
+      '[': 554.37, // high-c-sharp
+      ']': 493.88 // b
+      };
 
-            //play a middle 'C' for the duration of an 8th note
-            synth.triggerAttackRelease(frequency, "8n");
+  // function to play note
+  function playNote(frequency) {
+    //create a synth and connect it to the main output (your speakers)
+    const newSynth = new Tone.Synth().toDestination();
+    setSynth(newSynth)
 
-              // record note if recording is enabled
-              if (isRecording) {
-                  recordedNotes.push({
-                      time: audioCtx.currentTime,
-                      frequency: frequency,
-                      noteName: getNoteNameByFrequency(frequency) 
-                  });
-  
-                  updateSheetMusic();
-              }
+    //play a middle 'C' for the duration of an 8th note
+    newSynth.triggerAttackRelease(frequency, "8n");
+
+    const currentTime = newSynth.context.currentTime
+
+      // record note if recording is enabled
+      if (isRecording) {
+          recordedNotes.push({
+              time: currentTime,
+              frequency: frequency,
+              noteName: getNoteNameByFrequency(frequency) 
+          });
+
+          updateSheetMusic();
+      }
+  }
+
+  // function to start metronome
+  function startMetronome() {
+      var interval = 60 / tempo;
+      var startTime = currentTime;
+      var nextBeatTime = startTime + interval;
+
+      // create gain node for metronome sound
+      var metronomeGain = synth.context.createGain();
+      metronomeGain.gain.setValueAtTime(0, currentTime);
+      metronomeGain.connect(synth.context.destination);
+
+      function scheduleBeat() {
+          if (!isRecording) {
+              return;
           }
+
+          metronomeGain.gain.setValueAtTime(1, nextBeatTime - 0.05);
+          metronomeGain.gain.setValueAtTime(0, nextBeatTime);
+
+          nextBeatTime += interval;
+
+          setTimeout(scheduleBeat, (nextBeatTime - currentTime - 0.05) * 1000);
+      }
+
+      scheduleBeat();
+  }
+
+  // function to stop metronome
+  function stopMetronome() {
+      var metronomeGain = synth.context.createGain();
+      metronomeGain.gain.setValueAtTime(0, currentTime);
+  }
+
+  // function to play recorded notes
+  function playRecordedNotes() {
+      var startTime = currentTime;
+
+      recordedNotes.forEach(function(note) {
+          var time = note.time - recordedNotes[0].time + startTime;
+          var frequency = note.frequency;
+
+          setTimeout(function() {
+              playNote(frequency);
+          }, (time - currentTime) * 1000);
+      });
+  }
+
+  // code for displaying notes on graph
   
-          // function to start metronome
-          function startMetronome() {
-              var interval = 60 / tempo;
-              var startTime = audioCtx.currentTime;
-              var nextBeatTime = startTime + interval;
-  
-              // create gain node for metronome sound
-              var metronomeGain = audioCtx.createGain();
-              metronomeGain.gain.setValueAtTime(0, audioCtx.currentTime);
-              metronomeGain.connect(audioCtx.destination);
-  
-              function scheduleBeat() {
-                  if (!isRecording) {
-                      return;
-                  }
-  
-                  metronomeGain.gain.setValueAtTime(1, nextBeatTime - 0.05);
-                  metronomeGain.gain.setValueAtTime(0, nextBeatTime);
-  
-                  nextBeatTime += interval;
-  
-                  setTimeout(scheduleBeat, (nextBeatTime - audioCtx.currentTime - 0.05) * 1000);
-              }
-  
-              scheduleBeat();
-          }
-  
-          // function to stop metronome
-          function stopMetronome() {
-              var metronomeGain = audioCtx.createGain();
-              metronomeGain.gain.setValueAtTime(0, audioCtx.currentTime);
-          }
-  
-          // function to play recorded notes
-          function playRecordedNotes() {
-              var startTime = audioCtx.currentTime;
-  
-              recordedNotes.forEach(function(note) {
-                  var time = note.time - recordedNotes[0].time + startTime;
-                  var frequency = note.frequency;
-  
-                  setTimeout(function() {
-                      playNote(frequency);
-                  }, (time - audioCtx.currentTime) * 1000);
-              });
-          }
-  
-          // code for displaying notes on graph
-  
-          function updateSheetMusic() {
+  function updateSheetMusic() {
     const notesContainer = document.querySelector('.notes');
     notesContainer.innerHTML = '';
   
@@ -352,17 +401,17 @@ export default function Home() {
     const notes = song.tracks[selectedTrackIndex].notes;
     const interval = 60 / bpm;
   
-    let currentTime = audioCtx.currentTime;
+    let currentTime = synth?.context.currentTime;
   
     for (let i = 0; i < notes.length; i++) {
       const note = notes[i];
       const frequency = note.frequency;
       const duration = interval * 0.9;
   
-      const oscillator = audioCtx.createOscillator();
+      const oscillator = synth?.context.createOscillator();
       oscillator.type = 'sine';
       oscillator.frequency.value = frequency;
-      oscillator.connect(audioCtx.destination);
+      oscillator.connect(synth?.context.destination);
       oscillator.start(currentTime);
       oscillator.stop(currentTime + duration);
   
@@ -430,10 +479,6 @@ export default function Home() {
         setSearchResults(data)
 
         setIsShowingSearchResults(true)
-
-        // if (data.length === 1) {
-        //   goToPageBySongId(data[0].id)
-        // }
       })
       .catch(error => {
         // handle error
@@ -445,8 +490,27 @@ export default function Home() {
     window.location.href = `/?song_id=${songId}`
   }
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // fetch(`${apiBaseUrl}/song/${songId}`)
+      const res = await fetch(`${apiBaseUrl}/song/${song.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // body: JSON.stringify({ tracks: song.tracks }),
+        body: JSON.stringify(song),
+      });
+      console.log('Save response:', res);
+    } catch (error) {
+      console.error('Save error:', error);
+    }
+    setIsSaving(false);
+  }
+
   return (
-    <main className="main" onKeyDown={handleKeyDown}>
+    <Main className="main" onKeyDown={handleKeyDown}>
       <SearchRow>
         <Search
           allowClear
@@ -474,49 +538,43 @@ export default function Home() {
         </ul>
       </SearchResultsContainer>
       }
-      <SongTitle>Title: {song?.title}</SongTitle>
-      <SongInfoRow>
-        <SongDetail>Key: {song.keyLetter}</SongDetail>
-        <SongDetail> - </SongDetail>
+      <Row>
+        <Col>
+          <SongTitle>Title: {song?.title}</SongTitle>
+          <SongInfoRow>
+            <SongDetail>Key: {song.keyLetter}</SongDetail>
+            <SongDetail> - </SongDetail>
 
-        <SongDetail>BPM: {song.bpm}</SongDetail>
-      </SongInfoRow>
-      {}
-      {/* <div className="prevent-select share-container">
-        <button id="share">Share</button>
-      </div> */}
-      {/* <section id="scene" className="scene">
-          <div className="music-title-card">
-              <h2>The Misbits</h2>
-              <h2>"Love You To Bits"</h2>
-          </div>
-          <div className="band-mates">
-              <div className="band-mate" data-player-id="${bandMate.playerId}">
-                  <div className="name">John</div>
-                  <div className="nes-mario"></div>
-              </div>
-              <div className="band-mate" data-player-id="${bandMate.playerId}">
-                  <div className="name">David</div>
-                  <div className="nes-ash"></div>
-              </div>
-          </div>
-      </section> */}
-      <TempoSlider
-        type="range"
-        min="60"
-        max="240"
-        value={bpm}
-        onChange={handleTempoChange}
-      />
+            <SongDetail>BPM: {song.bpm}</SongDetail>
+            <TempoSlider
+              type="range"
+              min="60"
+              max="240"
+              value={bpm}
+              onChange={handleTempoChange}
+            />
+          </SongInfoRow>
+        </Col>
+        <Col>
+          <Button
+            type="primary"
+            onClick={handleSave}
+            // loading={isSaving}
+            // disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+          >
+            Save
+          </Button>
+        </Col>
+      </Row>
       <div className="container-with-border prevent-select">
-          <div>
-              <WaveformButton id="triangle" className="btn-waveform triangle" onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
-              <WaveformButton id="square" className="btn-waveform square" onClick={() => setWaveform('square')}>Square</WaveformButton>
-              <WaveformButton id="sawtooth" className="btn-waveform sawtooth" onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
-              <WaveformButton id="sine" className="btn-waveform sine" onClick={() => setWaveform('sine')}>Sine</WaveformButton>
+          <div className="container-with-border prevent-select">
+              <div>
+                  <WaveformButton id="triangle" className="btn-waveform triangle" onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
+                  <WaveformButton id="square" className="btn-waveform square" onClick={() => setWaveform('square')}>Square</WaveformButton>
+                  <WaveformButton id="sawtooth" className="btn-waveform sawtooth" onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
+                  <WaveformButton id="sine" className="btn-waveform sine" onClick={() => setWaveform('sine')}>Sine</WaveformButton>
+              </div>
           </div>
-      </div>
-      <div className="container-with-border prevent-select">
           <PlayButton id="play" onClick={handlePlayClick}>{playButtonIcon}</PlayButton>
           <ProgramGrid
             song={song}
@@ -534,6 +592,6 @@ export default function Home() {
               <div className="playhead"></div>
           </div> */}
       </div>
-    </main>
+    </Main>
   )
 }

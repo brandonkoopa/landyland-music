@@ -16,10 +16,11 @@ const GridWrap = styled.div`
 const Cell = styled.button`
   width: 64px;
   height: 64px;
-  border: 2px solid ${({ selected }) => (selected ? '#000' : '#000')};
+  border: 2px solid ${({ selected }) => (selected ? '#yellow' : '#000')};
   border-radius: 10px;
   font-weight: 800;
-  background-color: ${({ selected }) => (selected ? 'yellow' : 'transparent')};
+  background-color: ${({ selected }) => (selected ? 'yellow' : '#fff')};
+  /* background-color: #fff; */
   color: ${({ selected }) => (selected ? '#000' : 'transparent')};
   ${({ filled }) =>
     filled &&
@@ -28,12 +29,13 @@ const Cell = styled.button`
   `}
 `;
 
-const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
+const ProgramGrid = ({ song, setSong={}, selectedTrackIndex }) => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [history, setHistory] = useState([song]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
-  const selectedTrack = song?.tracks[selectedTrackIndex]
+  const selectedTrack = song?.tracks ? song?.tracks[selectedTrackIndex] : {}
+  const songNotes = song?.tracks ? song?.tracks[selectedTrackIndex].notes : []
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -180,22 +182,22 @@ const ProgramGrid = ({ song, setSong, selectedTrackIndex }) => {
       
       return (
         <GridWrap id="grid">
-          {song?.tracks[selectedTrackIndex].notes.map((note, noteIndex) => {
-        const index = selectedTrackIndex * selectedTrack.notes.length + noteIndex;
-        const filled = note && note.time === 100;
-        const isSelected = selectedCell === index;
-        const noteName = note ? note.noteName : '';
-        return (
-          <Cell
-            key={index}
-            selected={isSelected}
-            filled={filled}
-            onClick={() => handleCellClick(index)}
-          >
-            {noteName}
-          </Cell>
-        );
-      })}
+          {songNotes.map((note, noteIndex) => {
+            const index = selectedTrackIndex * selectedTrack.notes.length + noteIndex;
+            const filled = note && note.time === 100;
+            const isSelected = selectedCell === index;
+            const noteName = note ? note.noteName : '';
+            return (
+              <Cell
+                key={index}
+                selected={isSelected}
+                filled={filled}
+                onClick={() => handleCellClick(index)}
+              >
+                {noteName}
+              </Cell>
+            );
+          })}
         </GridWrap>
       );
       };
