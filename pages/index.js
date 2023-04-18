@@ -19,7 +19,7 @@ const Main = styled.main`
 const Row = styled.div`
   align-items: center;
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto auto auto;
   column-gap: 32px;
 `
 
@@ -93,7 +93,6 @@ const StopButton = styled.button`
 
 
 const TempoSlider = styled.input`
-  width: 200px;
   margin-right: 10px;
 `;
 
@@ -183,8 +182,11 @@ const RecordingButton = styled.button`
 
 const SearchRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 64px;
   width: 100%;
+  
+  &.results-open {
+    grid-template-columns: 1fr 64px;
+  }
 `
 
 const SearchResultsContainer = styled.div`
@@ -210,9 +212,11 @@ const SearchResult = styled.li`
 export default function Home() {
   const [song, setSong] = useState(exampleSong)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
+  const [selectedNoteIndex, setSelectedNoteIndex] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [waveform, setWaveform] = useState('sine')
+  const [isLooping, setIsLooping] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [isRecording, setIsRecording] = useState(false)
   const [recordedNotes, setRecordedNotes] = useState([])
@@ -261,15 +265,16 @@ export default function Home() {
           // }
           // const toLoad = songData.tracks ? songToLoad : emtpySong
 
-          const songWithEmptyNotes = getSongWithEmptyNotes(songData)
-
-          setSong({...songWithEmptyNotes}) // no notes? load array of empty objects
+          // const songWithEmptyNotes = getSongWithEmptyNotes(songData)
+          // setSong({...songWithEmptyNotes}) // no notes? load array of empty objects
+          setSong(songData)
           setSongLatestFromServer({...songData})
         })
         .catch(error => console.log(error));
     }
   }
 
+  // ToDo: Fix this function, because it's making the whole song empty
   const getSongWithEmptyNotes = song => {
     // use timeSignature
     let newSong = {...song}
@@ -289,12 +294,7 @@ export default function Home() {
     // Loop through each track
     newSong.tracks = newSong.tracks.map(track => {
       // Create a new notes array with the correct length
-      let newNotes = Array(numberOfNotesPerSection).fill({
-        stepFromRoot: null,
-        time: null,
-        noteName: null,
-        frequency: null
-      });
+      let newNotes = [];
   
       // Copy over existing notes
       track.notes.forEach(note => {
@@ -306,6 +306,20 @@ export default function Home() {
         }
       });
   
+      // Check if track length is less than numberOfNotesPerSection
+      if (newNotes.length < numberOfNotesPerSection) {
+        // Fill remaining notes with empty notes
+        const emptyNote = {
+          stepFromRoot: null,
+          time: null,
+          noteName: null,
+          frequency: null
+        };
+        for (let i = newNotes.length; i < numberOfNotesPerSection; i++) {
+          newNotes[i] = emptyNote;
+        }
+      }
+  
       // Update track notes
       return {
         ...track,
@@ -314,7 +328,7 @@ export default function Home() {
     });
   
     return newSong;
-  }
+  }  
   
   var keyMap = {
       'a': 261.63, // c
@@ -351,15 +365,35 @@ export default function Home() {
     const currentTime = newSynth.context.currentTime
 
       // record note if recording is enabled
-      if (isRecording) {
-          recordedNotes.push({
-              time: currentTime,
-              frequency: frequency,
-              noteName: getNoteNameByFrequency(frequency) 
-          });
+      // if (isRecording) {
+      //     writeNoteToSong({
+      //       time: currentTime,
+      //       frequency: frequency,
+      //       noteName: getNoteNameByFrequency(frequency) 
+      //     })
+      // }
 
-          updateSheetMusic();
-      }
+    if (selectedNoteIndex) {
+      writeNoteAtIndex({index: selectedNoteIndex, note: {
+        time: currentTime,
+        frequency: frequency,
+        noteName: getNoteNameByFrequency(frequency) 
+      }})
+    }
+  }
+
+  const writeNoteAtIndex = ({index, note}) => {
+    console.log('writeNoteAtIndex(', index)
+    const updatedTracks = [ ...song?.tracks ]
+    updatedTracks[selectedTrackIndex].notes[index] = note
+    // updatedTracks.push(note)
+    setSong({ ...song, tracks: updatedTracks })
+  }
+
+  const writeNoteToSong = note => {
+    const updatedTracks = [ ...song?.tracks, note ]
+    // updatedTracks.push(note)
+    setSong({ ...song, tracks: updatedTracks })
   }
 
   // function to start metronome
@@ -411,19 +445,19 @@ export default function Home() {
 
   // code for displaying notes on graph
   
-  function updateSheetMusic() {
-    const notesContainer = document.querySelector('.notes');
-    notesContainer.innerHTML = '';
+  // function updateSheetMusic() {
+  //   const notesContainer = document.querySelector('.notes');
+  //   notesContainer.innerHTML = '';
   
-    recordedNotes.forEach((note) => {
-      const noteElement = document.createElement('div');
-      noteElement.classList.add('note');
-      const noteName = note.noteName;
-      noteElement.classList.add(noteName);
-      noteElement.style.bottom = `${getNotePosition(noteName)}%`;
-      notesContainer.appendChild(noteElement);
-    });
-  }
+  //   recordedNotes.forEach((note) => {
+  //     const noteElement = document.createElement('div');
+  //     noteElement.classList.add('note');
+  //     const noteName = note.noteName;
+  //     noteElement.classList.add(noteName);
+  //     noteElement.style.bottom = `${getNotePosition(noteName)}%`;
+  //     notesContainer.appendChild(noteElement);
+  //   });
+  // }
   
   function getNoteNameByFrequency(frequency) {
     const noteFrequencies = {
@@ -481,6 +515,8 @@ export default function Home() {
       notes.map((note) => [note]),
       interval
     );
+
+    // ToDo: loop based on if isLooping
   
     noteSequence.start(currentTime);
     Tone.Transport.start();
@@ -515,6 +551,7 @@ export default function Home() {
   }
 
   const handleRecordClick = () => {
+    setIsPlaying(!isPlaying)
     setIsRecording(!isRecording);
   }
 
@@ -578,10 +615,10 @@ export default function Home() {
 
   return (
     <Main className="main" onKeyDown={handleKeyDown}>
-      <SearchRow>
+      <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
         <Search
           allowClear
-          placeholder="Search music"
+          placeholder="Search all music"
           loading={isSearching}
           onSearch={handleSearch}
         />
@@ -605,13 +642,19 @@ export default function Home() {
         </ul>
       </SearchResultsContainer>
       }
+      <SongTitle>Title: {song?.title}</SongTitle>
       <Row>
         <Col>
-          <SongTitle>Title: {song?.title}</SongTitle>
+        {isPlaying ? (
+          <StopButton id="stop" onClick={handlePlayClick}/>
+        ) : (
+          <PlayButton id="play" onClick={handlePlayClick}/>
+        )}
+        </Col>
+        <Col>
+          
           <SongInfoRow>
             <SongDetail>Key: {song.keyLetter}</SongDetail>
-            <SongDetail> - </SongDetail>
-
             <SongDetail>BPM: {song.bpm}</SongDetail>
             <TempoSlider
               type="range"
@@ -626,37 +669,32 @@ export default function Home() {
           <Button
             type="primary"
             onClick={handleSave}
-            // loading={isSaving}
-            // disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+            loading={isSaving}
+            disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
           >
             Save
           </Button>
         </Col>
       </Row>
       <div className="container-with-border prevent-select">
-          <div className="container-with-border prevent-select">
-              <div>
-                  <WaveformButton id="triangle" className="btn-waveform triangle" onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
-                  <WaveformButton id="square" className="btn-waveform square" onClick={() => setWaveform('square')}>Square</WaveformButton>
-                  <WaveformButton id="sawtooth" className="btn-waveform sawtooth" onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
-                  <WaveformButton id="sine" className="btn-waveform sine" onClick={() => setWaveform('sine')}>Sine</WaveformButton>
-              </div>
-          </div>
-          {isPlaying ? (
-            <StopButton id="stop" onClick={handlePlayClick}/>
-          ) : (
-            <PlayButton id="play" onClick={handlePlayClick}/>
-          )}
-          <ProgramGrid
-            song={song}
-            setSong={setSong}
-            selectedTrackIndex={selectedTrackIndex}
-          />
-          <PianoKeys playNote={playNote} />
           {/* { isRecording
           ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
           : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
           } */}
+          {/* <div>
+            <WaveformButton id="triangle" className="btn-waveform triangle" onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
+            <WaveformButton id="square" className="btn-waveform square" onClick={() => setWaveform('square')}>Square</WaveformButton>
+            <WaveformButton id="sawtooth" className="btn-waveform sawtooth" onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
+            <WaveformButton id="sine" className="btn-waveform sine" onClick={() => setWaveform('sine')}>Sine</WaveformButton>
+          </div> */}
+          <ProgramGrid
+            song={song}
+            setSong={setSong}
+            selectedTrackIndex={selectedTrackIndex}
+            selectedNoteIndex={selectedNoteIndex}
+            setSelectedNoteIndex={setSelectedNoteIndex}
+          />
+          <PianoKeys playNote={playNote} />
           {/* <div className="sheet-music">
               <div className="staff"></div>
               <div className="notes"></div>

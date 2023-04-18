@@ -16,10 +16,11 @@ const GridWrap = styled.div`
 const Cell = styled.button`
   width: 64px;
   height: 64px;
-  border: 2px solid ${({ selected }) => (selected ? '#yellow' : '#000')};
+  text-transform: uppercase;
+  border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')};
   border-radius: 10px;
   font-weight: 800;
-  /* background-color: ${({ selected }) => (selected ? 'yellow' : '#fff')}; */
+  /* background-color: ${({ selected }) => (selected ? '#FEF400' : '#fff')}; */
   background-color: #fff;
   color: ${({ selected }) => (selected ? '#000' : 'transparent')};
   ${({ filled }) =>
@@ -29,13 +30,17 @@ const Cell = styled.button`
   `}
 `;
 
-const ProgramGrid = ({ song, setSong={}, selectedTrackIndex }) => {
+const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedNoteIndex, setSelectedNoteIndex }) => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [history, setHistory] = useState([song]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
   const selectedTrack = song?.tracks ? song?.tracks[selectedTrackIndex] : {}
-  const songNotes = song?.tracks ? song?.tracks[selectedTrackIndex].notes : []
+  // const songNotes = song?.tracks ? song?.tracks[selectedTrackIndex].notes : []
+
+  useEffect(() => {
+    setSelectedCell(selectedNoteIndex);
+  }, [selectedNoteIndex]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -60,32 +65,36 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex }) => {
         "'": 'C++',
       };
       const note = keyToNote[event.key];
-      if (note && selectedCell !== null) {
-        const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
-        const noteIndex = selectedCell % song?.tracks[0].notes.length;
-        const track = song?.tracks[trackIndex];
-        const notes = [...track.notes];
-        const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
-        noteObj.time = 100;
-        noteObj.frequency = getFrequency(note);
-        noteObj.noteName = note;
-        notes[noteIndex] = noteObj;
-        const updatedTracks = [
-          ...song?.tracks.slice(0, trackIndex),
-          { ...track, notes },
-          ...song?.tracks.slice(trackIndex + 1),
-        ];
-        const newSong = { ...song, tracks: updatedTracks };
-        setSong(newSong);
-        setHistory([...history.slice(0, historyIndex + 1), newSong]);
-        setHistoryIndex(historyIndex + 1);
-      }
+      writeNote(note)
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedCell, song, setSong, history, historyIndex]);
+
+  const writeNote = (note) => {
+    if (note && selectedCell !== null) {
+      const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
+      const noteIndex = selectedCell % song?.tracks[0].notes.length;
+      const track = song?.tracks[trackIndex];
+      const notes = [...track.notes];
+      const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
+      noteObj.time = 100;
+      noteObj.frequency = getFrequency(note);
+      noteObj.noteName = note;
+      notes[noteIndex] = noteObj;
+      const updatedTracks = [
+        ...song?.tracks.slice(0, trackIndex),
+        { ...track, notes },
+        ...song?.tracks.slice(trackIndex + 1),
+      ];
+      const newSong = { ...song, tracks: updatedTracks };
+      setSong(newSong);
+      setHistory([...history.slice(0, historyIndex + 1), newSong]);
+      setHistoryIndex(historyIndex + 1);
+    }
+  }
 
   // useEffect(() => {
   //   if (typeof WebMidi !== 'undefined') {
@@ -144,12 +153,16 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex }) => {
       setHistory([...history.slice(0, historyIndex + 1), newSong]);
       setHistoryIndex(historyIndex + 1);
       setSelectedCell(null);
-      } else {
+      console.log('set setSelectedNoteIndex to null')
+      setSelectedNoteIndex(null);
+    } else {
       setSelectedCell(index);
-      }
-      };
+      console.log('set setSelectedNoteIndex to ', index)
+      setSelectedNoteIndex(index);
+    }
+  };
       
-      const getFrequency = (note) => {
+  const getFrequency = (note) => {
       const notes = {
       C: 261.63,
       'C#': 277.18,
@@ -181,24 +194,29 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex }) => {
       };
       
       return (
-        <GridWrap id="grid">
-          {songNotes.map((note, noteIndex) => {
-            const index = selectedTrackIndex * selectedTrack.notes.length + noteIndex;
-            const filled = note && note.time === 100;
-            const isSelected = selectedCell === index;
-            const noteName = note ? note.noteName : '';
-            return (
-              <Cell
-                key={index}
-                selected={isSelected}
-                filled={filled}
-                onClick={() => handleCellClick(index)}
-              >
-                {noteName}
-              </Cell>
-            );
-          })}
-        </GridWrap>
+        <div>
+          <GridWrap id="grid">
+            { song?.tracks[selectedTrackIndex].notes.map((note, noteIndex) => {
+              const index = selectedTrackIndex * selectedTrack.notes.length + noteIndex;
+              const filled = note && note.time === 100;
+              const isSelected = selectedCell === index;
+              const noteName = note ? note.noteName : '';
+              return (
+                <Cell
+                  key={index}
+                  selected={isSelected}
+                  filled={filled}
+                  onClick={() => handleCellClick(index)}
+                >
+                  {noteName}
+                </Cell>
+              );
+            })}
+          </GridWrap>
+          <div>
+          <h5>Select note in grid then press a key to write that note. Select again to erase.</h5>
+        </div>
+        </div>
       );
       };
 
