@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import * as Tone from 'tone';
 import Image from 'next/image'
 import PianoKeys from './ui_instruments/PianoKeys';
-// import { Inter } from 'next/font/google'
 import bandMates from './json/band-mates.json';
 import exampleSong from './json/example-song.json'
 import emtpySong from './json/empty-song.json'
@@ -67,6 +66,31 @@ const PlayButton = styled.button`
     border-left: 30px solid #000;
   }
 `;
+
+const StopButton = styled.button`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    background-color: #000;
+  }
+`;
+
 
 const TempoSlider = styled.input`
   width: 200px;
@@ -236,16 +260,61 @@ export default function Home() {
           //   tracks: songData.tracks || emtpySong
           // }
           // const toLoad = songData.tracks ? songToLoad : emtpySong
-          setSong({...songData}) // no notes? load array of empty objects
+
+          const songWithEmptyNotes = getSongWithEmptyNotes(songData)
+
+          setSong({...songWithEmptyNotes}) // no notes? load array of empty objects
           setSongLatestFromServer({...songData})
         })
         .catch(error => console.log(error));
     }
   }
 
-  useEffect(() => {
-    setPlayButtonIcon(isPlaying ? '■' : '▶');
-  }, [isPlaying]);
+  const getSongWithEmptyNotes = song => {
+    // use timeSignature
+    let newSong = {...song}
+  
+    let numberOfNotesPerSection = 16
+  
+    switch(song.timeSignature) {
+      case "3/4": numberOfNotesPerSection = 12; break;
+      case "4/4": numberOfNotesPerSection = 16; break;
+      case "5/4": numberOfNotesPerSection = 20; break;
+      case "6/4": numberOfNotesPerSection = 24; break;
+      case "7/4": numberOfNotesPerSection = 28; break;
+      case "12/8": numberOfNotesPerSection = 96; break;
+      default: numberOfNotesPerSection = 16; break;
+    }
+    
+    // Loop through each track
+    newSong.tracks = newSong.tracks.map(track => {
+      // Create a new notes array with the correct length
+      let newNotes = Array(numberOfNotesPerSection).fill({
+        stepFromRoot: null,
+        time: null,
+        noteName: null,
+        frequency: null
+      });
+  
+      // Copy over existing notes
+      track.notes.forEach(note => {
+        if (note.stepFromRoot !== null && note.time !== null) {
+          const index = note.stepFromRoot + (note.time / 100) * (numberOfNotesPerSection / 4);
+          if (index >= 0 && index < numberOfNotesPerSection) {
+            newNotes[index] = note;
+          }
+        }
+      });
+  
+      // Update track notes
+      return {
+        ...track,
+        notes: newNotes
+      };
+    });
+  
+    return newSong;
+  }
   
   var keyMap = {
       'a': 261.63, // c
@@ -392,6 +461,7 @@ export default function Home() {
   const handlePlayClick = () => {
     if (isPlaying) {
       setIsPlaying(false);
+      Tone.Transport.stop();
       return;
     }
   
@@ -401,23 +471,20 @@ export default function Home() {
     const notes = song.tracks[selectedTrackIndex].notes;
     const interval = 60 / bpm;
   
-    let currentTime = synth?.context.currentTime;
+    const synth = new Tone.Synth().toDestination();
+    let currentTime = Tone.now();
   
-    for (let i = 0; i < notes.length; i++) {
-      const note = notes[i];
-      const frequency = note.frequency;
-      const duration = interval * 0.9;
+    const noteSequence = new Tone.Sequence(
+      (time, note) => {
+        synth.triggerAttackRelease(note.frequency, interval * 0.9, time);
+      },
+      notes.map((note) => [note]),
+      interval
+    );
   
-      const oscillator = synth?.context.createOscillator();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = frequency;
-      oscillator.connect(synth?.context.destination);
-      oscillator.start(currentTime);
-      oscillator.stop(currentTime + duration);
-  
-      currentTime += interval;
-    }
-  };
+    noteSequence.start(currentTime);
+    Tone.Transport.start();
+  };  
   
   function getNotePosition(noteName) {
     const notePositions = {
@@ -497,7 +564,7 @@ export default function Home() {
       const res = await fetch(`${apiBaseUrl}/song/${song.id}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-type': 'application/json; charset=UTF-8',
         },
         // body: JSON.stringify({ tracks: song.tracks }),
         body: JSON.stringify(song),
@@ -575,7 +642,11 @@ export default function Home() {
                   <WaveformButton id="sine" className="btn-waveform sine" onClick={() => setWaveform('sine')}>Sine</WaveformButton>
               </div>
           </div>
-          <PlayButton id="play" onClick={handlePlayClick}>{playButtonIcon}</PlayButton>
+          {isPlaying ? (
+            <StopButton id="stop" onClick={handlePlayClick}/>
+          ) : (
+            <PlayButton id="play" onClick={handlePlayClick}/>
+          )}
           <ProgramGrid
             song={song}
             setSong={setSong}

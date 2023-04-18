@@ -19,8 +19,8 @@ const Cell = styled.button`
   border: 2px solid ${({ selected }) => (selected ? '#yellow' : '#000')};
   border-radius: 10px;
   font-weight: 800;
-  background-color: ${({ selected }) => (selected ? 'yellow' : '#fff')};
-  /* background-color: #fff; */
+  /* background-color: ${({ selected }) => (selected ? 'yellow' : '#fff')}; */
+  background-color: #fff;
   color: ${({ selected }) => (selected ? '#000' : 'transparent')};
   ${({ filled }) =>
     filled &&
