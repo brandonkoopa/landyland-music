@@ -20,7 +20,7 @@ const Row = styled.div`
   align-items: center;
   display: grid;
   grid-template-columns: auto auto auto;
-  column-gap: 32px;
+  column-gap: 16px;
 `
 
 const Col = styled.div`
@@ -39,6 +39,10 @@ const SongInfoRow = styled.div`
 
 const SongDetail = styled.span`
   font-size: 16px;
+  padding: 8px;
+  border: 1px solid #999;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.5);
 `
 
 const PlayButton = styled.button`
@@ -46,7 +50,6 @@ const PlayButton = styled.button`
   height: 60px;
   border-radius: 50%;
   background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -72,7 +75,6 @@ const StopButton = styled.button`
   height: 60px;
   border-radius: 50%;
   background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -90,8 +92,14 @@ const StopButton = styled.button`
     background-color: #000;
   }
 `;
-
-
+const BPMSliderWrapper = styled.div`
+  position: absolute;
+  padding: 10px;
+  background-color: #fff;
+  box-shadow: 0px 3px 6px rgba(0,0,0,0.16);
+  z-index: 1;
+  transform: translate(46px,38px);
+`;
 const TempoSlider = styled.input`
   margin-right: 10px;
 `;
@@ -226,6 +234,8 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([])
   const [synth, setSynth] = useState(null)
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false)
+
+  const [isShowingBPMEdit, setIsShowingBPMEdit] = useState(false)
 
   let playheadPosition = 0;
 
@@ -655,14 +665,20 @@ export default function Home() {
           
           <SongInfoRow>
             <SongDetail>Key: {song.keyLetter}</SongDetail>
-            <SongDetail>BPM: {song.bpm}</SongDetail>
-            <TempoSlider
-              type="range"
-              min="60"
-              max="240"
-              value={bpm}
-              onChange={handleTempoChange}
-            />
+            <SongDetail onClick={() => setIsShowingBPMEdit(!isShowingBPMEdit)}>
+              BPM: {song.bpm}
+            </SongDetail>
+              { isShowingBPMEdit &&
+              <BPMSliderWrapper>
+                <TempoSlider
+                  type="range"
+                  min="60"
+                  max="240"
+                  value={bpm}
+                  onChange={handleTempoChange}
+                />
+              </BPMSliderWrapper>
+              }
           </SongInfoRow>
         </Col>
         <Col>
