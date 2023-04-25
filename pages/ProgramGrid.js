@@ -11,12 +11,15 @@ const GridWrap = styled.div`
   margin: 16px auto;
   background-color: transparent;
   border: 0;
+  inset 0.2em 0.2em 0.2em 0 rgba(0,0,0,0.25), inset -0.2em -0.2em 0.2em 0 rgba(255,255,255,0.25)
 `;
 
 const Cell = styled.button`
+  box-shadow: inset 0.2em 0.2em 0.2em 0 rgba(255,255,255,0.5), inset -0.2em -0.2em 0.2em 0 rgba(0,0,0,0.5);
   width: 64px;
   height: 64px;
   text-transform: uppercase;
+  /* border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
   border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')};
   border-radius: 10px;
   font-weight: 800;

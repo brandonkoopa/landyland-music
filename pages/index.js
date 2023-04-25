@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { withTheme } from 'styled-components'
 import * as Tone from 'tone';
 import Image from 'next/image'
+import Head from 'next/head'
 import PianoKeys from './ui_instruments/PianoKeys';
 import bandMates from './json/band-mates.json';
 import exampleSong from './json/example-song.json'
 import emtpySong from './json/empty-song.json'
 import ProgramGrid from './ProgramGrid'
 import WaveformButton from './components/WaveformButton'
-import { Button, Input } from 'antd';
+import { Button, Input, Layout, Menu, theme } from 'antd';
+const { Header, Content, Footer, Sider } = Layout;
 const { Search } = Input;
 
 const Main = styled.main`
   background-color: #ebebeb;
   color: #000x;
+  /* font-family: "Press Start 2P"; */
 `
 
 const Row = styled.div`
@@ -30,6 +34,13 @@ const Col = styled.div`
 const SongTitle = styled.h2`
   font-size: 16px;
 `
+
+const EditableTitle = styled.input`
+  font-size: 24px;
+  font-weight: bold;
+  border: none;
+  outline: none;
+`;
 
 const SongInfoRow = styled.div`
   display: grid;
@@ -217,13 +228,12 @@ const SearchResult = styled.li`
   margin: 0; /* Remove margins */
 `
 
-export default function Home() {
+const Home = () => {
   const [song, setSong] = useState(exampleSong)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
   const [selectedNoteIndex, setSelectedNoteIndex] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [waveform, setWaveform] = useState('sine')
   const [isLooping, setIsLooping] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [isRecording, setIsRecording] = useState(false)
@@ -235,7 +245,10 @@ export default function Home() {
   const [synth, setSynth] = useState(null)
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false)
 
-  const [isShowingBPMEdit, setIsShowingBPMEdit] = useState(false)
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [isEditingBpm, setIsEditingBpm] = useState(false)
+
+  const selectedWaveform = song.tracks[selectedTrackIndex].waveform
 
   let playheadPosition = 0;
 
@@ -244,13 +257,6 @@ export default function Home() {
   useEffect(() => {
     loadSongFromUrl()
   }, []);
-
-  useEffect(() => {
-    console.log('--------')
-    console.log('song : ', song)
-    console.log('songLatestFromServer : ', songLatestFromServer)
-    console.log('--------')
-  }, [song]);
 
   const loadSongFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -366,7 +372,20 @@ export default function Home() {
   // function to play note
   function playNote(frequency) {
     //create a synth and connect it to the main output (your speakers)
-    const newSynth = new Tone.Synth().toDestination();
+    // const newSynth = new Tone.Synth().toDestination();
+    const newSynth = new Tone.Synth({
+      oscillator: {
+        type: song.tracks[selectedTrackIndex].waveform || 'square',
+        // type: "pulse",
+        width: 0.5, // You can adjust the pulse width here
+      }
+    }).toDestination();
+    // create a new oscillator
+    // const oscillator = new Tone.Oscillator(440, song.tracks[selectedTrackIndex].waveform).toDestination();
+    // connect the oscillator to the synth
+    // newSynth.oscillator = oscillator;
+    // oscillator.connect(newSynth);
+    // newSynth.oscillator.type = song.tracks[selectedTrackIndex].waveform;
     setSynth(newSynth)
 
     //play a middle 'C' for the duration of an 8th note
@@ -623,100 +642,127 @@ export default function Home() {
     setIsSaving(false);
   }
 
+  const setWaveform = waveform => {
+    const updatedTracks = [ ...song?.tracks ]
+    updatedTracks[selectedTrackIndex].waveform = waveform
+    setSong({ ...song, tracks: updatedTracks })
+  }
+
   return (
-    <Main className="main" onKeyDown={handleKeyDown}>
-      <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
-        <Search
-          allowClear
-          placeholder="Search all music"
-          loading={isSearching}
-          onSearch={handleSearch}
-        />
-        { isShowingSearchResults &&
-        <Button type="link" onClick={() => {setIsShowingSearchResults(false)}}>
-          Cancel
-        </Button>
-        }
-      </SearchRow>
-      { isShowingSearchResults &&
-      <SearchResultsContainer>
-        <h3>Search results</h3>
-        <ul>
-        {searchResults.map((result, index) => (
-          <SearchResult key={index}
-            onClick={() => { goToPageBySongId(result.id) }}
-          >
-            {result.title}
-          </SearchResult>
-        ))}
-        </ul>
-      </SearchResultsContainer>
-      }
-      <SongTitle>Title: {song?.title}</SongTitle>
-      <Row>
-        <Col>
-        {isPlaying ? (
-          <StopButton id="stop" onClick={handlePlayClick}/>
-        ) : (
-          <PlayButton id="play" onClick={handlePlayClick}/>
-        )}
-        </Col>
-        <Col>
-          
-          <SongInfoRow>
-            <SongDetail>Key: {song.keyLetter}</SongDetail>
-            <SongDetail onClick={() => setIsShowingBPMEdit(!isShowingBPMEdit)}>
-              BPM: {song.bpm}
-            </SongDetail>
-              { isShowingBPMEdit &&
-              <BPMSliderWrapper>
-                <TempoSlider
-                  type="range"
-                  min="60"
-                  max="240"
-                  value={bpm}
-                  onChange={handleTempoChange}
-                />
-              </BPMSliderWrapper>
-              }
-          </SongInfoRow>
-        </Col>
-        <Col>
-          <Button
-            type="primary"
-            onClick={handleSave}
-            loading={isSaving}
-            disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
-          >
-            Save
-          </Button>
-        </Col>
-      </Row>
-      <div className="container-with-border prevent-select">
-          {/* { isRecording
-          ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
-          : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
-          } */}
-          {/* <div>
-            <WaveformButton id="triangle" className="btn-waveform triangle" onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
-            <WaveformButton id="square" className="btn-waveform square" onClick={() => setWaveform('square')}>Square</WaveformButton>
-            <WaveformButton id="sawtooth" className="btn-waveform sawtooth" onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
-            <WaveformButton id="sine" className="btn-waveform sine" onClick={() => setWaveform('sine')}>Sine</WaveformButton>
-          </div> */}
-          <ProgramGrid
-            song={song}
-            setSong={setSong}
-            selectedTrackIndex={selectedTrackIndex}
-            selectedNoteIndex={selectedNoteIndex}
-            setSelectedNoteIndex={setSelectedNoteIndex}
+    <>
+      <Head>
+          <title>Landy Land - Music</title>
+          <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" />
+          <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
+      </Head>
+      <Main className="main" onKeyDown={handleKeyDown}>
+        <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
+          <Search
+            allowClear
+            placeholder="Search all music"
+            loading={isSearching}
+            onSearch={handleSearch}
           />
-          <PianoKeys playNote={playNote} />
-          {/* <div className="sheet-music">
-              <div className="staff"></div>
-              <div className="notes"></div>
-              <div className="playhead"></div>
-          </div> */}
-      </div>
-    </Main>
+          { isShowingSearchResults &&
+          <Button type="link" onClick={() => {setIsShowingSearchResults(false)}}>
+            Cancel
+          </Button>
+          }
+        </SearchRow>
+        { isShowingSearchResults &&
+        <SearchResultsContainer>
+          <h3>Search results</h3>
+          <ul>
+          {searchResults.map((result, index) => (
+            <SearchResult key={index}
+              onClick={() => { goToPageBySongId(result.id) }}
+            >
+              {result.title}
+            </SearchResult>
+          ))}
+          </ul>
+        </SearchResultsContainer>
+        }
+        {isEditingTitle ? (
+          <EditableTitle
+            type="text"
+            value={song.title}
+            onChange={(event) => {setSong({ ...song, title: event.target.value })}}
+            onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title }); setIsEditingTitle(false);}}}
+            autoFocus
+          />
+        ) : (
+          <SongTitle onClick={() => {setIsEditingTitle(true)}}>Title: {song?.title}</SongTitle>
+        )}
+        <Row>
+          <Col>
+          {isPlaying ? (
+            <StopButton id="stop" onClick={handlePlayClick}/>
+          ) : (
+            <PlayButton id="play" onClick={handlePlayClick}/>
+          )}
+          </Col>
+          <Col>
+            
+            <SongInfoRow>
+              <SongDetail>Key: {song.keyLetter}</SongDetail>
+              <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
+                BPM: {song.bpm}
+              </SongDetail>
+                { isEditingBpm &&
+                <BPMSliderWrapper>
+                  <TempoSlider
+                    type="range"
+                    min="60"
+                    max="240"
+                    value={bpm}
+                    onChange={handleTempoChange}
+                  />
+                </BPMSliderWrapper>
+                }
+            </SongInfoRow>
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              onClick={handleSave}
+              loading={isSaving}
+              disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+            >
+              Save
+            </Button>
+          </Col>
+        </Row>
+        <div className="container-with-border prevent-select">
+            {/* { isRecording
+            ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
+            : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
+            } */}
+            <div>
+              <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
+              <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}>Square</WaveformButton>
+              <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
+              <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}>Pulse</WaveformButton>
+              {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
+            </div>
+            <ProgramGrid
+              song={song}
+              setSong={setSong}
+              selectedTrackIndex={selectedTrackIndex}
+              selectedNoteIndex={selectedNoteIndex}
+              setSelectedNoteIndex={setSelectedNoteIndex}
+            />
+            <PianoKeys playNote={playNote} />
+            {/* <div className="sheet-music">
+                <div className="staff"></div>
+                <div className="notes"></div>
+                <div className="playhead"></div>
+            </div> */}
+        </div>
+      </Main>
+    </>
   )
 }
+
+export default withTheme(Home)
+

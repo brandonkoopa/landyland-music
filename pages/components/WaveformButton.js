@@ -2,14 +2,25 @@ import React from 'react'
 import styled from 'styled-components';
 
 const StyledWaveformButton = styled.button`
-  padding: 8px;
   margin-bottom: 8px;
-  background-color: #333;
-  color: #fff;
+  background-color: #fff;
+  color: #333;
   border: 0;
+  padding: 4px 7px;
+
+  &.selected {
+    background-color: #333;
+    color: #fff;
+  }
+
+  &.nes-btn {
+    font-family: "Press Start 2P";
+    font-size: 8px;
+    padding: 4px 8px;
+  }
   
   &:not(:last-of-type) {
-    margin-right: 8px;
+    margin-right: 4px;
   }
 `;
 
