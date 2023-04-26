@@ -15,12 +15,13 @@ const GridWrap = styled.div`
 `;
 
 const Cell = styled.button`
-  box-shadow: inset 0.2em 0.2em 0.2em 0 rgba(255,255,255,0.5), inset -0.2em -0.2em 0.2em 0 rgba(0,0,0,0.5);
+  /* box-shadow: inset 0.2em 0.2em 0.2em 0 rgba(255,255,255,0.5), inset -0.2em -0.2em 0.2em 0 rgba(0,0,0,0.5); */
+  box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5);
   width: 64px;
   height: 64px;
   text-transform: uppercase;
   /* border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
-  border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')};
+  /* border: 2px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
   border-radius: 10px;
   font-weight: 800;
   /* background-color: ${({ selected }) => (selected ? '#FEF400' : '#fff')}; */
@@ -33,13 +34,14 @@ const Cell = styled.button`
   `}
 `;
 
-const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedNoteIndex, setSelectedNoteIndex }) => {
+const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionIndex, selectedNoteIndex, setSelectedNoteIndex }) => {
   const [selectedCell, setSelectedCell] = useState(null);
   const [history, setHistory] = useState([song]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
   const selectedTrack = song?.tracks ? song?.tracks[selectedTrackIndex] : {}
-  // const songNotes = song?.tracks ? song?.tracks[selectedTrackIndex].notes : []
+  const notes = song && song.tracks && song.tracks[selectedTrackIndex] && song.tracks[selectedTrackIndex].sections && song.tracks[selectedTrackIndex].sections[selectedSectionIndex] && song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes || [];
+
 
   useEffect(() => {
     setSelectedCell(selectedNoteIndex);
@@ -78,10 +80,11 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedNoteIndex, 
 
   const writeNote = (note) => {
     if (note && selectedCell !== null) {
-      const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
-      const noteIndex = selectedCell % song?.tracks[0].notes.length;
+      const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length);
+      const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length;
       const track = song?.tracks[trackIndex];
-      const notes = [...track.notes];
+      // const notes = [...track.notes]
+      const notes = song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes;
       const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
       noteObj.time = 100;
       noteObj.frequency = getFrequency(note);
@@ -137,10 +140,10 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedNoteIndex, 
 
   const handleCellClick = (index) => {
     if (selectedCell === index) {
-      const trackIndex = Math.floor(selectedCell / song?.tracks[0].notes.length);
-      const noteIndex = selectedCell % song?.tracks[0].notes.length;
+      const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length);
+      const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length;
       const track = song?.tracks[trackIndex];
-      const notes = [...track.notes];
+      // const notes = [...track.notes];
       const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
       noteObj.time = 0;
       noteObj.frequency = 0;
@@ -199,8 +202,8 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedNoteIndex, 
       return (
         <div>
           <GridWrap id="grid">
-            { song?.tracks[selectedTrackIndex].notes.map((note, noteIndex) => {
-              const index = selectedTrackIndex * selectedTrack.notes.length + noteIndex;
+            { notes.map((note, noteIndex) => {
+              const index = selectedTrackIndex * notes.length + noteIndex;
               const filled = note && note.time === 100;
               const isSelected = selectedCell === index;
               const noteName = note ? note.noteName : '';

@@ -2,14 +2,13 @@ import React from 'react'
 import styled from 'styled-components';
 
 const StyledWaveformButton = styled.button`
-  margin-bottom: 8px;
   background-color: #fff;
   color: #333;
   border: 0;
-  padding: 4px 7px;
+  padding: 4px 16px;
 
   &.selected {
-    background-color: #333;
+    background-color: #92d3ff;
     color: #fff;
   }
 
@@ -21,6 +20,10 @@ const StyledWaveformButton = styled.button`
   
   &:not(:last-of-type) {
     margin-right: 4px;
+  }
+
+  .triangle {
+    top: -4px;
   }
 `;
 

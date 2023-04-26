@@ -9,6 +9,7 @@ import bandMates from './json/band-mates.json';
 import exampleSong from './json/example-song.json'
 import emtpySong from './json/empty-song.json'
 import ProgramGrid from './ProgramGrid'
+import KeyMenu from './components/KeyMenu'
 import WaveformButton from './components/WaveformButton'
 import { Button, Input, Layout, Menu, theme } from 'antd';
 const { Header, Content, Footer, Sider } = Layout;
@@ -33,6 +34,7 @@ const Col = styled.div`
 
 const SongTitle = styled.h2`
   font-size: 16px;
+  margin: 8px 0 0;
 `
 
 const EditableTitle = styled.input`
@@ -53,7 +55,10 @@ const SongDetail = styled.span`
   padding: 8px;
   border: 1px solid #999;
   border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.5);
+  /* background-color: rgba(255, 255, 255, 0.5); */
+  box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5);
+  background-color: #ebebeb;
+  vertical-align: middle;
 `
 
 const PlayButton = styled.button`
@@ -108,12 +113,50 @@ const BPMSliderWrapper = styled.div`
   padding: 10px;
   background-color: #fff;
   box-shadow: 0px 3px 6px rgba(0,0,0,0.16);
-  z-index: 1;
   transform: translate(46px,38px);
+  z-index: 100;
+  left: 8px;
+  bottom: 0;
+  right: 0;
 `;
 const TempoSlider = styled.input`
   margin-right: 10px;
 `;
+
+const TracksContainer = styled.ul`
+  margin: 8px 0 0;
+  padding: 0;
+`
+
+const WaveformContainer = styled.div`
+  text-align: center;
+`
+
+const TrackTab = styled.li`
+  display: inline-block;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid #999;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  margin: 0;
+  padding: 8px;
+  background-color: transparent;
+  background-color: #ccc;
+
+  &.selected {
+   background-color: transparent;
+  }
+`
+
+const TrackContent = styled.div`
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #999;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  padding: 8px;
+`
 
 const RecordButton = styled.button`
   width: 60px;
@@ -231,6 +274,7 @@ const SearchResult = styled.li`
 const Home = () => {
   const [song, setSong] = useState(exampleSong)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
+  const [selectedSectionIndex, setSelectedSectionIndex] = useState(0)
   const [selectedNoteIndex, setSelectedNoteIndex] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -247,6 +291,7 @@ const Home = () => {
 
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingBpm, setIsEditingBpm] = useState(false)
+  const [isEditingKey, setIsEditingKey] = useState(false)
 
   const selectedWaveform = song.tracks[selectedTrackIndex].waveform
 
@@ -291,7 +336,7 @@ const Home = () => {
   }
 
   // ToDo: Fix this function, because it's making the whole song empty
-  const getSongWithEmptyNotes = song => {
+  const getTrackWorthOfEmptyNotes = song => {
     // use timeSignature
     let newSong = {...song}
   
@@ -306,44 +351,53 @@ const Home = () => {
       case "12/8": numberOfNotesPerSection = 96; break;
       default: numberOfNotesPerSection = 16; break;
     }
+
+    const trackNotes = Array.from({ length: numberOfNotesPerSection }, (_, index) => ({
+      "time": null,
+      "frequency": null,
+      "noteName": null,
+      "stepFromRoot": null,
+    }))
+
+    return trackNotes
     
-    // Loop through each track
-    newSong.tracks = newSong.tracks.map(track => {
-      // Create a new notes array with the correct length
-      let newNotes = [];
+    // // Loop through each track
+    // newSong.tracks = newSong.tracks.map(track => {
+    //   // Create a new notes array with the correct length
+    //   let newNotes = [];
   
-      // Copy over existing notes
-      track.notes.forEach(note => {
-        if (note.stepFromRoot !== null && note.time !== null) {
-          const index = note.stepFromRoot + (note.time / 100) * (numberOfNotesPerSection / 4);
-          if (index >= 0 && index < numberOfNotesPerSection) {
-            newNotes[index] = note;
-          }
-        }
-      });
+    //   // Copy over existing notes
+    //   track.notes.forEach(note => {
+    //     if (note.stepFromRoot !== null && note.time !== null) {
+    //       const index = note.stepFromRoot + (note.time / 100) * (numberOfNotesPerSection / 4);
+    //       if (index >= 0 && index < numberOfNotesPerSection) {
+    //         newNotes[index] = note;
+    //       }
+    //     }
+    //   });
   
-      // Check if track length is less than numberOfNotesPerSection
-      if (newNotes.length < numberOfNotesPerSection) {
-        // Fill remaining notes with empty notes
-        const emptyNote = {
-          stepFromRoot: null,
-          time: null,
-          noteName: null,
-          frequency: null
-        };
-        for (let i = newNotes.length; i < numberOfNotesPerSection; i++) {
-          newNotes[i] = emptyNote;
-        }
-      }
+    //   // Check if track length is less than numberOfNotesPerSection
+    //   if (newNotes.length < numberOfNotesPerSection) {
+    //     // Fill remaining notes with empty notes
+    //     const emptyNote = {
+    //       stepFromRoot: null,
+    //       time: null,
+    //       noteName: null,
+    //       frequency: null
+    //     };
+    //     for (let i = newNotes.length; i < numberOfNotesPerSection; i++) {
+    //       newNotes[i] = emptyNote;
+    //     }
+    //   }
   
-      // Update track notes
-      return {
-        ...track,
-        notes: newNotes
-      };
-    });
+    //   // Update track notes
+    //   return {
+    //     ...track,
+    //     notes: newNotes
+    //   };
+    // });
   
-    return newSong;
+    // return newSong;
   }  
   
   var keyMap = {
@@ -376,7 +430,6 @@ const Home = () => {
     const newSynth = new Tone.Synth({
       oscillator: {
         type: song.tracks[selectedTrackIndex].waveform || 'square',
-        // type: "pulse",
         width: 0.5, // You can adjust the pulse width here
       }
     }).toDestination();
@@ -414,7 +467,7 @@ const Home = () => {
   const writeNoteAtIndex = ({index, note}) => {
     console.log('writeNoteAtIndex(', index)
     const updatedTracks = [ ...song?.tracks ]
-    updatedTracks[selectedTrackIndex].notes[index] = note
+    updatedTracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes[index] = note
     // updatedTracks.push(note)
     setSong({ ...song, tracks: updatedTracks })
   }
@@ -531,7 +584,7 @@ const Home = () => {
     setIsRecording(false);
     setIsPlaying(true);
   
-    const notes = song.tracks[selectedTrackIndex].notes;
+    const notes = song.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes;
     const interval = 60 / bpm;
   
     const synth = new Tone.Synth().toDestination();
@@ -648,6 +701,24 @@ const Home = () => {
     setSong({ ...song, tracks: updatedTracks })
   }
 
+  const selectTrack = trackIndex => {
+    setSelectedTrackIndex(trackIndex)
+  }
+
+  const createNewTrack = () => {
+    const updatedTracks = [ ...song?.tracks ]
+    updatedTracks.push({
+      title: `Track ${updatedTracks.length + 1}`,
+      notes: getTrackWorthOfEmptyNotes(song)
+    })
+    setSong({ ...song, tracks: updatedTracks })
+  }
+
+  const handleOptionClick = (key) => {
+    setSong({...song, keyLetter: key })
+    setIsEditingKey(false)
+  }
+
   return (
     <>
       <Head>
@@ -703,12 +774,14 @@ const Home = () => {
           )}
           </Col>
           <Col>
-            
             <SongInfoRow>
-              <SongDetail>Key: {song.keyLetter}</SongDetail>
+              <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
               <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
-                BPM: {song.bpm}
+                <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
               </SongDetail>
+              { isEditingKey &&
+                <KeyMenu handleOptionClick={handleOptionClick} />
+              }
                 { isEditingBpm &&
                 <BPMSliderWrapper>
                   <TempoSlider
@@ -733,22 +806,34 @@ const Home = () => {
             </Button>
           </Col>
         </Row>
-        <div className="container-with-border prevent-select">
+        <TracksContainer id="tracks-container">
+          {song.tracks.map((track, index) => (
+          <TrackTab id={`track-${index}`}
+            className={`${selectedTrackIndex === index ? ' selected' : ''}`}
+            onClick={() => {selectTrack(index)}}
+          >
+            {track.title}
+          </TrackTab>
+          ))}
+          <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
+        </TracksContainer>
+        <TrackContent>
             {/* { isRecording
             ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
             : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
             } */}
-            <div>
-              <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}>Triangle</WaveformButton>
-              <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}>Square</WaveformButton>
-              <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}>Sawtooth</WaveformButton>
-              <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}>Pulse</WaveformButton>
+            <WaveformContainer>
+              <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
+              <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
+              <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
+              <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
               {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
-            </div>
+            </WaveformContainer>
             <ProgramGrid
               song={song}
               setSong={setSong}
               selectedTrackIndex={selectedTrackIndex}
+              selectedSectionIndex={selectedSectionIndex}
               selectedNoteIndex={selectedNoteIndex}
               setSelectedNoteIndex={setSelectedNoteIndex}
             />
@@ -758,7 +843,7 @@ const Home = () => {
                 <div className="notes"></div>
                 <div className="playhead"></div>
             </div> */}
-        </div>
+        </TrackContent>
       </Main>
     </>
   )
