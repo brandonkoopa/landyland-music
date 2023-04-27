@@ -10,6 +10,7 @@ import exampleSong from './json/example-song.json'
 import emtpySong from './json/empty-song.json'
 import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
+import Gamepad from './components/Gamepad'
 import WaveformButton from './components/WaveformButton'
 import { Button, Input, Layout, Menu, theme } from 'antd';
 const { Header, Content, Footer, Sider } = Layout;
@@ -837,6 +838,7 @@ const Home = () => {
               selectedNoteIndex={selectedNoteIndex}
               setSelectedNoteIndex={setSelectedNoteIndex}
             />
+            <Gamepad />
             <PianoKeys playNote={playNote} />
             {/* <div className="sheet-music">
                 <div className="staff"></div>
