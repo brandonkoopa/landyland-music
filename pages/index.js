@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { withTheme } from 'styled-components'
 import * as Tone from 'tone';
@@ -114,11 +114,8 @@ const BPMSliderWrapper = styled.div`
   padding: 10px;
   background-color: #fff;
   box-shadow: 0px 3px 6px rgba(0,0,0,0.16);
-  transform: translate(46px,38px);
+  transform: translate(46px,49px);
   z-index: 100;
-  left: 8px;
-  bottom: 0;
-  right: 0;
 `;
 const TempoSlider = styled.input`
   margin-right: 10px;
@@ -276,7 +273,7 @@ const Home = () => {
   const [song, setSong] = useState(exampleSong)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
   const [selectedSectionIndex, setSelectedSectionIndex] = useState(0)
-  const [selectedNoteIndex, setSelectedNoteIndex] = useState(null)
+  const [selectedNoteIndex, setSelectedNoteIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isLooping, setIsLooping] = useState(false)
@@ -315,20 +312,6 @@ const Home = () => {
       fetch(`${apiBaseUrl}/song/${songId}`)
         .then(response => response.json())
         .then(songData => {
-          // process data and update UI elements
-          // setSong({ ...song, title: data.title });
-
-          // const newTracks = []
-
-          // const songSet = {
-          //   ...song,
-          //   title: songData.title,
-          //   tracks: songData.tracks || emtpySong
-          // }
-          // const toLoad = songData.tracks ? songToLoad : emtpySong
-
-          // const songWithEmptyNotes = getSongWithEmptyNotes(songData)
-          // setSong({...songWithEmptyNotes}) // no notes? load array of empty objects
           setSong(songData)
           setSongLatestFromServer({...songData})
         })
@@ -337,7 +320,7 @@ const Home = () => {
   }
 
   // ToDo: Fix this function, because it's making the whole song empty
-  const getTrackWorthOfEmptyNotes = song => {
+  const getEmptyNotes = song => {
     // use timeSignature
     let newSong = {...song}
   
@@ -353,14 +336,14 @@ const Home = () => {
       default: numberOfNotesPerSection = 16; break;
     }
 
-    const trackNotes = Array.from({ length: numberOfNotesPerSection }, (_, index) => ({
+    const emptyNotes = Array.from({ length: numberOfNotesPerSection }, (_, index) => ({
       "time": null,
       "frequency": null,
       "noteName": null,
       "stepFromRoot": null,
     }))
 
-    return trackNotes
+    return emptyNotes
     
     // // Loop through each track
     // newSong.tracks = newSong.tracks.map(track => {
@@ -468,7 +451,7 @@ const Home = () => {
   const writeNoteAtIndex = ({index, note}) => {
     console.log('writeNoteAtIndex(', index)
     const updatedTracks = [ ...song?.tracks ]
-    updatedTracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes[index] = note
+    updatedTracks[selectedTrackIndex].sections[selectedSectionIndex].notes[index] = note
     // updatedTracks.push(note)
     setSong({ ...song, tracks: updatedTracks })
   }
@@ -575,35 +558,89 @@ const Home = () => {
     return closestNote[0];
   }
 
-  const handlePlayClick = () => {
+  const playSong = songToPlay => {
+    console.log('songToPlay : ', songToPlay)
+    // Stop any currently playing audio
+    Tone.Transport.stop();
+    Tone.Transport.clear();
+
     if (isPlaying) {
       setIsPlaying(false);
-      Tone.Transport.stop();
       return;
     }
-  
+
     setIsRecording(false);
     setIsPlaying(true);
-  
-    const notes = song.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes;
-    const interval = 60 / bpm;
-  
-    const synth = new Tone.Synth().toDestination();
-    let currentTime = Tone.now();
-  
-    const noteSequence = new Tone.Sequence(
-      (time, note) => {
-        synth.triggerAttackRelease(note.frequency, interval * 0.9, time);
-      },
-      notes.map((note) => [note]),
-      interval
-    );
 
-    // ToDo: loop based on if isLooping
-  
-    noteSequence.start(currentTime);
-    Tone.Transport.start();
-  };  
+    songToPlay.tracks?.forEach((track) => {
+      track.sections?.forEach((section) => {
+        const notes = section?.notes;
+        const interval = 60 / bpm;
+
+        console.log('notes : ', notes)
+    
+        const synth = new Tone.Synth({
+          oscillator: {
+            type: track.waveform || 'square',
+          },
+        }).toDestination();
+        let currentTime = Tone.now();
+    
+        const noteSequence = new Tone.Sequence(
+          (time, note) => {
+            synth.triggerAttackRelease(note.frequency, interval * 0.9, time);
+          },
+          notes,
+          interval
+        );
+
+        console.log('noteSequence : ', noteSequence)
+    
+        noteSequence.start(currentTime);
+        Tone.Transport.start();
+      })
+    })
+
+    // ToDo: uncomment if you want to hear drums! ...
+    // ToDo: get this working with code above. If noteLetter is "kick", then play kick. If "snare", play snare.
+    // create a new Tone.js synth object for each drum sound
+    // const kick = new Tone.MembraneSynth({
+    //   pitchDecay: 0.05,
+    //   octaves: 5,
+    //   oscillator: { type: "sine" },
+    //   envelope: { sustain: 0, release: 0.5 },
+    // }).toDestination();
+    // const snare = new Tone.NoiseSynth({
+    //   noise: { type: "white" },
+    //   envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+    // }).toDestination();
+    // const hiHat = new Tone.NoiseSynth({
+    //   noise: { type: "pink" },
+    //   envelope: { attack: 0.001, decay: 0.1, sustain: 0 },
+    // }).toDestination();
+
+    // // create a new Tone.js Sequence object
+    // const drumSequence = new Tone.Sequence(
+    //   // callback function for each step in the sequence
+    //   (time, step) => {
+    //     // trigger the appropriate drum sound based on the step
+    //     if (step === 0 || step === 8) {
+    //       kick.triggerAttackRelease("C1", "8n", time);
+    //     } else if (step === 4 || step === 12) {
+    //       snare.triggerAttackRelease("16n", time);
+    //     } else {
+    //       hiHat.triggerAttackRelease("16n", time);
+    //     }
+    //   },
+    //   // array of values for each step in the sequence
+    //   [0, 2, 4, 6, 8, 10, 12, 14],
+    //   // subdivision of each step (e.g. "8n" for eighth notes)
+    //   "8n"
+    // );
+
+    // start the sequence
+    // drumSequence.start(0);
+  };
   
   function getNotePosition(noteName) {
     const notePositions = {
@@ -650,6 +687,8 @@ const Home = () => {
     setBpm(newTempo);
     const newSong = { ...song, bpm: newTempo };
     setSong(newSong);
+
+    Tone.Transport.bpm.value = parseFloat(newTempo)
   }
 
   function handleSearch(value) {
@@ -710,7 +749,7 @@ const Home = () => {
     const updatedTracks = [ ...song?.tracks ]
     updatedTracks.push({
       title: `Track ${updatedTracks.length + 1}`,
-      notes: getTrackWorthOfEmptyNotes(song)
+      notes: getEmptyNotes(song)
     })
     setSong({ ...song, tracks: updatedTracks })
   }
@@ -769,9 +808,9 @@ const Home = () => {
         <Row>
           <Col>
           {isPlaying ? (
-            <StopButton id="stop" onClick={handlePlayClick}/>
+            <StopButton id="stop" onClick={() => {playSong(song)}}/>
           ) : (
-            <PlayButton id="play" onClick={handlePlayClick}/>
+            <PlayButton id="play" onClick={() => {playSong(song)}}/>
           )}
           </Col>
           <Col>

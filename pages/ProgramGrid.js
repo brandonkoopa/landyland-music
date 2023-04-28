@@ -80,11 +80,11 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
 
   const writeNote = (note) => {
     if (note && selectedCell !== null) {
-      const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length);
-      const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length;
+      const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes.length);
+      const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes.length;
       const track = song?.tracks[trackIndex];
       // const notes = [...track.notes]
-      const notes = song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes;
+      const notes = song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes;
       const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
       noteObj.time = 100;
       noteObj.frequency = getFrequency(note);
@@ -140,8 +140,8 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
 
   const handleCellClick = (index) => {
     if (selectedCell === index) {
-      const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length);
-      const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[setSelectedNoteIndex].notes.length;
+      const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes.length);
+      const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes.length;
       const track = song?.tracks[trackIndex];
       // const notes = [...track.notes];
       const noteObj = notes[noteIndex] || { time: 0, frequency: 0, noteName: '' };
@@ -203,7 +203,8 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
         <div>
           <GridWrap id="grid">
             { notes.map((note, noteIndex) => {
-              const index = selectedTrackIndex * notes.length + noteIndex;
+              // const index = selectedTrackIndex * notes.length + noteIndex;
+              const index = noteIndex;
               const filled = note && note.time === 100;
               const isSelected = selectedCell === index;
               const noteName = note ? note.noteName : '';
