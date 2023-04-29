@@ -26,7 +26,7 @@ const Cell = styled.button`
   font-weight: 800;
   /* background-color: ${({ selected }) => (selected ? '#FEF400' : '#fff')}; */
   background-color: #fff;
-  color: ${({ selected }) => (selected ? '#000' : 'transparent')};
+  color: ${({ selected }) => (selected ? '#000' : '#000')};
   ${({ filled }) =>
     filled &&
     `

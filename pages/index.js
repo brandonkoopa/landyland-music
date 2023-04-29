@@ -271,6 +271,7 @@ const SearchResult = styled.li`
 
 const Home = () => {
   const [song, setSong] = useState(exampleSong)
+  const [tones, setTones] = useState([]);
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
   const [selectedSectionIndex, setSelectedSectionIndex] = useState(0)
   const [selectedNoteIndex, setSelectedNoteIndex] = useState(0)
@@ -300,6 +301,14 @@ const Home = () => {
   useEffect(() => {
     loadSongFromUrl()
   }, []);
+  
+  const clearAllTones = () => {
+    // Stop any currently playing audio
+    Tone.Transport.stop();
+    Tone.Transport.clear();
+    // Clean up old Tone objects when song changes
+    tones.forEach((tone) => tone.dispose());
+  }
 
   const loadSongFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -559,10 +568,11 @@ const Home = () => {
   }
 
   const playSong = songToPlay => {
-    console.log('songToPlay : ', songToPlay)
     // Stop any currently playing audio
-    Tone.Transport.stop();
-    Tone.Transport.clear();
+    Tone.Transport.stop()
+    Tone.Transport.clear()
+
+    clearAllTones()
 
     if (isPlaying) {
       setIsPlaying(false);
@@ -572,75 +582,86 @@ const Home = () => {
     setIsRecording(false);
     setIsPlaying(true);
 
+    let newTones = [...tones]
+
     songToPlay.tracks?.forEach((track) => {
       track.sections?.forEach((section) => {
         const notes = section?.notes;
         const interval = 60 / bpm;
 
-        console.log('notes : ', notes)
-    
-        const synth = new Tone.Synth({
-          oscillator: {
-            type: track.waveform || 'square',
-          },
-        }).toDestination();
-        let currentTime = Tone.now();
-    
-        const noteSequence = new Tone.Sequence(
-          (time, note) => {
-            synth.triggerAttackRelease(note.frequency, interval * 0.9, time);
-          },
-          notes,
-          interval
-        );
+        if (track.type === 'strings' || track.type === 'keys') {
+          const synth = new Tone.Synth({
+            oscillator: {
+              type: track.waveform || 'square',
+            },
+          }).toDestination();
+          let currentTime = Tone.now();
 
-        console.log('noteSequence : ', noteSequence)
-    
-        noteSequence.start(currentTime);
-        Tone.Transport.start();
+          newTones.push(synth)
+      
+          const noteSequence = new Tone.Sequence(
+            (time, note) => {
+              synth.triggerAttackRelease(note.frequency, interval * 0.9, time);
+            },
+            notes,
+            interval
+          );
+      
+          noteSequence.start(0);
+
+          newTones.push(noteSequence)
+          
+          Tone.Transport.start();
+        } else if (track.type === 'drums') {
+          const kick = new Tone.MembraneSynth({
+            pitchDecay: 0.05,
+            octaves: 5,
+            oscillator: { type: "sine" },
+            envelope: { sustain: 0, release: 0.5 },
+          }).toDestination();
+          newTones.push(kick)
+
+          const snare = new Tone.NoiseSynth({
+            noise: { type: "white" },
+            envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+          }).toDestination();
+          newTones.push(snare)
+
+          const hiHat = new Tone.NoiseSynth({
+            noise: { type: "pink" },
+            envelope: { attack: 0.001, decay: 0.1, sustain: 0 },
+          }).toDestination();
+          newTones.push(snare)
+
+          // create a new Tone.js Sequence object
+          const drumSequence = new Tone.Sequence(
+            // callback function for each step in the sequence
+            (time, note) => {
+              // trigger the appropriate drum sound based on the step
+              if (note.noteName === 'kick') {
+                kick.triggerAttackRelease("C1", "8n", time);
+              } else if (note.noteName === 'snare') {
+                snare.triggerAttackRelease("16n", time);
+              } else if (note.noteName === 'hihat') {
+                hiHat.triggerAttackRelease("16n", time);
+              }
+            },
+            // array of values for each step in the sequence
+            notes,
+            // subdivision of each step (e.g. "8n" for eighth notes)
+            "8n"
+          );
+
+          newTones.push(drumSequence)
+
+          // start the sequence
+          drumSequence.start(0);
+        }
       })
     })
 
-    // ToDo: uncomment if you want to hear drums! ...
-    // ToDo: get this working with code above. If noteLetter is "kick", then play kick. If "snare", play snare.
-    // create a new Tone.js synth object for each drum sound
-    // const kick = new Tone.MembraneSynth({
-    //   pitchDecay: 0.05,
-    //   octaves: 5,
-    //   oscillator: { type: "sine" },
-    //   envelope: { sustain: 0, release: 0.5 },
-    // }).toDestination();
-    // const snare = new Tone.NoiseSynth({
-    //   noise: { type: "white" },
-    //   envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
-    // }).toDestination();
-    // const hiHat = new Tone.NoiseSynth({
-    //   noise: { type: "pink" },
-    //   envelope: { attack: 0.001, decay: 0.1, sustain: 0 },
-    // }).toDestination();
-
-    // // create a new Tone.js Sequence object
-    // const drumSequence = new Tone.Sequence(
-    //   // callback function for each step in the sequence
-    //   (time, step) => {
-    //     // trigger the appropriate drum sound based on the step
-    //     if (step === 0 || step === 8) {
-    //       kick.triggerAttackRelease("C1", "8n", time);
-    //     } else if (step === 4 || step === 12) {
-    //       snare.triggerAttackRelease("16n", time);
-    //     } else {
-    //       hiHat.triggerAttackRelease("16n", time);
-    //     }
-    //   },
-    //   // array of values for each step in the sequence
-    //   [0, 2, 4, 6, 8, 10, 12, 14],
-    //   // subdivision of each step (e.g. "8n" for eighth notes)
-    //   "8n"
-    // );
-
-    // start the sequence
-    // drumSequence.start(0);
-  };
+    setTones(newTones)
+  }
   
   function getNotePosition(noteName) {
     const notePositions = {
@@ -877,7 +898,7 @@ const Home = () => {
               selectedNoteIndex={selectedNoteIndex}
               setSelectedNoteIndex={setSelectedNoteIndex}
             />
-            <Gamepad />
+            <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} />
             <PianoKeys playNote={playNote} />
             {/* <div className="sheet-music">
                 <div className="staff"></div>

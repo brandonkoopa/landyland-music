@@ -140,7 +140,7 @@ const Button = styled.button`
   }
 `;
 
-const Gamepad = () => {
+const Gamepad = ({instrumentType}) => {
   return (
     <GamepadWrapper>
         <ControllerLeft>
@@ -154,14 +154,14 @@ const Gamepad = () => {
         </ControllerLeft>
         <ControllerRight>
           <ButtonRow>
-            <Button>vii</Button>
+          <Button>{instrumentType === 'drums' ? 'H' : 'vii'}</Button>
           </ButtonRow>
           <ButtonRow>
-            <Button>IV</Button>
-            <Button>V</Button>
+          <Button>{instrumentType === 'drums' ? 'S' : 'IV'}</Button>
+            <Button>{instrumentType === 'drums' ? 'S' : 'V'}</Button>
           </ButtonRow>
           <ButtonRow>
-            <Button>I</Button>
+            <Button>{instrumentType === 'drums' ? 'K' : 'I'}</Button>
           </ButtonRow>
         </ControllerRight>
     </GamepadWrapper>
