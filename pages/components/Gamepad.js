@@ -140,7 +140,7 @@ const Button = styled.button`
   }
 `;
 
-const Gamepad = ({instrumentType}) => {
+const Gamepad = ({instrumentType, handleButtonPress}) => {
   return (
     <GamepadWrapper>
         <ControllerLeft>
@@ -154,14 +154,14 @@ const Gamepad = ({instrumentType}) => {
         </ControllerLeft>
         <ControllerRight>
           <ButtonRow>
-          <Button>{instrumentType === 'drums' ? 'H' : 'vii'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'hihat' : 'B')}}>{instrumentType === 'drums' ? 'H' : 'vii'}</Button>
           </ButtonRow>
           <ButtonRow>
-          <Button>{instrumentType === 'drums' ? 'S' : 'IV'}</Button>
-            <Button>{instrumentType === 'drums' ? 'S' : 'V'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'G')}}>{instrumentType === 'drums' ? 'S' : 'IV'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'E')}}>{instrumentType === 'drums' ? 'S' : 'V'}</Button>
           </ButtonRow>
           <ButtonRow>
-            <Button>{instrumentType === 'drums' ? 'K' : 'I'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'C')}}>{instrumentType === 'drums' ? 'K' : 'I'}</Button>
           </ButtonRow>
         </ControllerRight>
     </GamepadWrapper>

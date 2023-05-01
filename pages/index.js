@@ -1,32 +1,111 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import styled from 'styled-components';
+import React, { useCallback, useEffect, useState } from 'react'
+import styled from 'styled-components'
 import { withTheme } from 'styled-components'
+import { ThemeProvider } from 'styled-components'
+import theme from './theme'
 import * as Tone from 'tone';
 import Image from 'next/image'
 import Head from 'next/head'
-import PianoKeys from './ui_instruments/PianoKeys';
-import bandMates from './json/band-mates.json';
+import { useRouter } from 'next/router'
+import PianoKeys from './ui_instruments/PianoKeys'
+import bandMates from './json/band-mates.json'
 import exampleSong from './json/example-song.json'
 import emtpySong from './json/empty-song.json'
 import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
 import Gamepad from './components/Gamepad'
+import Art from './components/Art'
+import ArtEditor from './components/ArtEditor'
 import WaveformButton from './components/WaveformButton'
-import { Button, Input, Layout, Menu, theme } from 'antd';
+import {
+  SaveFilled,
+  EditFilled,
+  SearchOutlined,
+  HomeFilled,
+  ContainerFilled,
+  DownOutlined,
+  UpOutlined,
+} from '@ant-design/icons';
+import { Button, Input, Layout, Menu } from 'antd'
 const { Header, Content, Footer, Sider } = Layout;
 const { Search } = Input;
 
+const MainLayout = styled(Layout)`
+  height: 100vh;
+`
 const Main = styled.main`
-  background-color: #ebebeb;
-  color: #000x;
+  background-color: ${props => props.theme.color.appBackgroundColor};
+  color: #fff;
+  justify-content: flex-start;
   /* font-family: "Press Start 2P"; */
 `
+const SearchView = styled.div`
+  width: 100%;
+`
+const TabBar = styled.div`
+  display: inline-flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  transform: translateY(0);
+  transition: transform 1s;
 
-const Row = styled.div`
+  &.hidden {
+    transform: translateY(100px);
+  }
+
+  /* Styles for screens smaller than a tablet */
+  @media only screen and (min-width: 768px) {
+    display: none;
+  }
+`;
+const Tab = styled.div`
+  background-color: ${props => props.theme.element.tab.backgroundColor};
+  color: ${props => props.theme.element.tab.color};
+  flex: 1;
+  text-align: center;
+  padding: 4px 8px 8px;
+  font-size: 16px;
+  font-weight: 600;
+
+  &.selected {
+    color: ${props => props.theme.element.tab.selectedColor};
+  }
+`;
+
+const SiderStyled= styled(Sider)`
+  position: absolute !important;
+  bottom: 0px;
+  top: 0px;
+  z-index: 100;
+
+  /* Styles for screens smaller than a tablet */
+  @media only screen and (max-width: 768px) {
+    display: none;
+  }
+`
+const SongRow = styled.div`
   align-items: center;
   display: grid;
-  grid-template-columns: auto auto auto;
-  column-gap: 16px;
+  grid-template-columns: 46px 32px 1fr 40px 30px;
+  column-gap: 0px;
+  width: 100%;
+  margin: 16px 0 8px;
+  opacity: 1;
+  transition: all 1s;
+
+  &.hidden {
+    opacity: 0;
+    transform: translateY(500px);
+  }
+`
+
+const ArtEditorContainer = styled.div`
+  /* position: absolute; */
+  background-color: #000;
+  /* top: 64px; */
 `
 
 const Col = styled.div`
@@ -44,29 +123,73 @@ const EditableTitle = styled.input`
   border: none;
   outline: none;
 `;
+const SongEditingContainer = styled.div`
+  background-color: ${props => props.theme.color.appBackgroundColor};
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 1s;
 
-const SongInfoRow = styled.div`
+  &.hidden {
+    opacity: 0;
+    transform: translateY(1000px);
+  }
+`
+const SongEditToolsRow = styled.div`
   display: grid;
   column-gap: 16px;
   grid-template-columns: auto auto auto;
+  margin-top: 16px;
 `
 
 const SongDetail = styled.span`
+  color: #000;
   font-size: 16px;
   padding: 8px;
   border: 1px solid #999;
   border-radius: 8px;
   /* background-color: rgba(255, 255, 255, 0.5); */
-  box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5);
+  /* box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5); */
   background-color: #ebebeb;
   vertical-align: middle;
 `
+const SaveButton = styled(Button)`
+  background-color: #00B4EE;
+  color: #fff !important;
+  opacity: 1;
+  font-size: 23px;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  box-shadow: none !important;
+  transform: translateY(-6px);
 
+  :disabled {
+    opacity: 0.25;
+  }
+`
+const SongEditingHeader = styled.div`
+  display: grid;
+  grid-template-columns: 64px 32px 1fr 30px;
+  column-gap: 16px;
+`
+const EditButton = styled(Button)`
+  color: ${props => props.theme.color.controlIconColor};
+  outline: 0;
+  border: none;
+  -moz-outline-style: none;
+`
+const CreateSongButton = styled(Button)`
+  background-color: #00B4EE;
+  color: #fff;
+`
+const CancelButton = styled(Button)`
+  color: #fff;
+`
 const PlayButton = styled.button`
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #fff;
+  border: 0;
+  width: 30px;
+  height: 30px;
+  background-color: transparent;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -81,34 +204,40 @@ const PlayButton = styled.button`
     transform: translate(-50%, -50%);
     width: 0;
     height: 0;
-    border-top: 20px solid transparent;
-    border-bottom: 20px solid transparent;
-    border-left: 30px solid #000;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 20px solid ${props => props.theme.color.controlIconColor};
   }
 `;
 
-const StopButton = styled.button`
-  width: 60px;
-  height: 60px;
+const PauseButton = styled.button`
+  border: 0;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background-color: #fff;
+  background-color: transparent;
   position: relative;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
 
-  &:before {
+  &:before,
+  &:after {
     content: "";
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 40%;
     transform: translate(-50%, -50%);
-    width: 30px;
-    height: 30px;
-    background-color: #000;
+    width: 4px;
+    height: 14px;
+    background-color: ${props => props.theme.color.controlIconColor};
   }
-`;
+
+  &:after {
+    left: 60%;
+  }
+`
 const BPMSliderWrapper = styled.div`
   position: absolute;
   padding: 10px;
@@ -141,7 +270,7 @@ const TrackTab = styled.li`
   margin: 0;
   padding: 8px;
   background-color: transparent;
-  background-color: #ccc;
+  background-color: #666;
 
   &.selected {
    background-color: transparent;
@@ -149,11 +278,11 @@ const TrackTab = styled.li`
 `
 
 const TrackContent = styled.div`
-  border-top: 1px solid #ccc;
+  /* border-top: 1px solid #ccc;
   border-bottom: 1px solid #999;
   border-left: 1px solid #999;
-  border-right: 1px solid #999;
-  padding: 8px;
+  border-right: 1px solid #999; */
+  padding: 8px 0 0;
 `
 
 const RecordButton = styled.button`
@@ -250,18 +379,20 @@ const SearchRow = styled.div`
 `
 
 const SearchResultsContainer = styled.div`
-  background-color: #ebebeb;
-  color: #000;
+  background-color: ${props => props.theme.color.appBackgroundColor};
+  color: #fff;
   position: absolute;
-  top: 64px;
+  top: 48px;
   left: 0;
   right: 0;
   bottom: 0;
+  text-align: center;
   z-index: 100;
   padding: 32px;
 `
 
 const SearchResult = styled.li`
+  background-color: ${props => props.theme.color.appBackgroundColor};
   color: #64A5FF;
   font-size: 16px;
   list-style-type: none; /* Remove bullets */
@@ -270,11 +401,17 @@ const SearchResult = styled.li`
 `
 
 const Home = () => {
+  const router = useRouter()
   const [song, setSong] = useState(exampleSong)
+  const [art, setArt] = useState([])
+  const [isEditingSongArt, setIsEditingSongArt] = useState(true)
+  const [enteredSearchText, setEnteredSearchText] = useState('');
   const [tones, setTones] = useState([]);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
   const [selectedSectionIndex, setSelectedSectionIndex] = useState(0)
   const [selectedNoteIndex, setSelectedNoteIndex] = useState(0)
+  const [isEditingSong, setIsEditingSong] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isLooping, setIsLooping] = useState(false)
@@ -283,8 +420,9 @@ const Home = () => {
   const [recordedNotes, setRecordedNotes] = useState([])
   const [songLatestFromServer, setSongLatestFromServer] = useState({})
   const [isSearching, setIsSearching] = useState(false)
-  const [playButtonIcon, setPlayButtonIcon] = useState('▶')
   const [searchResults, setSearchResults] = useState([])
+  const [isEnteringSearch, setIsEnteringSearch] = useState(false)
+  const [playButtonIcon, setPlayButtonIcon] = useState('▶')
   const [synth, setSynth] = useState(null)
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false)
 
@@ -292,16 +430,92 @@ const Home = () => {
   const [isEditingBpm, setIsEditingBpm] = useState(false)
   const [isEditingKey, setIsEditingKey] = useState(false)
 
+  const isOnSearchTab = selectedTabIndex === 1
+
   const selectedWaveform = song.tracks[selectedTrackIndex].waveform
 
   let playheadPosition = 0;
 
   const apiBaseUrl = 'https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev'
 
+  
+
   useEffect(() => {
     loadSongFromUrl()
+    
+    console.log('try midi...')
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+    } else {
+      console.log('WebMIDI is not supported in this browser.')
+    }
   }, []);
-  
+
+  const onMIDISuccess = (midiAccess) => {
+    console.log('onMIDISuccess')
+    for (let input of midiAccess.inputs.values()) {
+      input.onmidimessage = onMIDIMessage;
+    }
+  };
+
+  const onMIDIFailure = () => {
+    alert("Could not access your MIDI devices.");
+  };
+
+  const onMIDIMessage = (event) => {
+    console.log('onMIDIMessage')
+    const [command, note, velocity] = event.data;
+    console.log('event.data : ', event.data)
+    console.log('command : ', command)
+    console.log('note : ', note)
+
+    if (command === 144) {
+      // MIDI note on message
+      playMidiNote({
+        noteName: getNoteName(note),
+        frequency: getFrequency(note),
+      });
+    }
+  };
+
+  const getNoteName = (note) => {
+    const noteNames = [
+      "C",
+      "C#",
+      "D",
+      "D#",
+      "E",
+      "F",
+      "F#",
+      "G",
+      "G#",
+      "A",
+      "A#",
+      "B",
+    ];
+    const octave = Math.floor(note / 12) - 1;
+    const noteName = note % 12;
+    return noteNames[noteName] + octave;
+  };
+
+  const getFrequency = (note) => {
+    return 440 * Math.pow(2, (note - 69) / 12);
+  };
+
+  const playMidiNote = (note) => {
+    console.log("Played MIDI note:", note)
+    // playNote(note.frequency)
+
+    console.log('try to writeNoteAtIndex')
+
+    writeNoteAtIndex({index: selectedNoteIndex, note: {
+      time: null,
+      frequency: note.frequency,
+      noteName: note.noteName
+    }})
+    // Call your function to play the note here, passing the note object as an argument
+  };
+
   const clearAllTones = () => {
     // Stop any currently playing audio
     Tone.Transport.stop();
@@ -517,22 +731,6 @@ const Home = () => {
           }, (time - currentTime) * 1000);
       });
   }
-
-  // code for displaying notes on graph
-  
-  // function updateSheetMusic() {
-  //   const notesContainer = document.querySelector('.notes');
-  //   notesContainer.innerHTML = '';
-  
-  //   recordedNotes.forEach((note) => {
-  //     const noteElement = document.createElement('div');
-  //     noteElement.classList.add('note');
-  //     const noteName = note.noteName;
-  //     noteElement.classList.add(noteName);
-  //     noteElement.style.bottom = `${getNotePosition(noteName)}%`;
-  //     notesContainer.appendChild(noteElement);
-  //   });
-  // }
   
   function getNoteNameByFrequency(frequency) {
     const noteFrequencies = {
@@ -712,6 +910,16 @@ const Home = () => {
     Tone.Transport.bpm.value = parseFloat(newTempo)
   }
 
+  const handleSearchInputChange = (event) => {
+    console.log('handleSearchInputChange')
+    const value = event.target.value;
+    setIsEnteringSearch(true)
+    setTimeout(() => {
+      setIsEnteringSearch(false)
+      handleSearch(value);
+    }, 1000);
+  }
+
   function handleSearch(value) {
     if (value === '') { return }
 
@@ -756,6 +964,45 @@ const Home = () => {
     setIsSaving(false);
   }
 
+  const handleNewSongSelect = () => {
+    console.log('handleNewSongSelect')
+    createNewSong({title: enteredSearchText})
+    setEnteredSearchText('')
+    setIsShowingSearchResults(false)
+  }
+
+  const createNewSong = ({title='New Song'}) => {
+    console.log('createNewSong')
+    
+    // ToDo: display "Are you sure?"
+    
+    router.push('/')
+
+    // clear query params
+    const { protocol, host, pathname } = window.location
+    const url = `${protocol}//${host}${pathname}`
+    window.history.replaceState(null, null, url)
+
+    const updatedTracks = [ ...song?.tracks ]
+    updatedTracks.push({
+      title: `Track ${updatedTracks.length + 1}`,
+      notes: getEmptyNotes(song)
+    })
+    setSong({
+      "title": title,
+      "tracks": getEmptyNotes(song),
+      "keyLetter": "C",
+      "createdAt": "2022-04-20T20:16:00.515Z",
+      "timeSignature": "4/4",
+      "minorOrMajor": "minor",
+      "sectionProgression": [],
+      "userId": 1,
+      "chordProgression": [0,1,4,5],
+      // "id": "48b25161-e0f3-4650-abe4-1373f322b0cd",
+      "bpm": "166"
+  })
+  }
+
   const setWaveform = waveform => {
     const updatedTracks = [ ...song?.tracks ]
     updatedTracks[selectedTrackIndex].waveform = waveform
@@ -780,134 +1027,233 @@ const Home = () => {
     setIsEditingKey(false)
   }
 
+  const handleGamepadButtonPress = (noteName) => {
+    writeNoteAtIndex({index: selectedNoteIndex, note: {
+      time: null,
+      frequency: null,
+      noteName: noteName
+    }})
+  }
+
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <Head>
           <title>Landy Land - Music</title>
           <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" />
           <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
       </Head>
-      <Main className="main" onKeyDown={handleKeyDown}>
-        <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
-          <Search
-            allowClear
-            placeholder="Search all music"
-            loading={isSearching}
-            onSearch={handleSearch}
-          />
-          { isShowingSearchResults &&
-          <Button type="link" onClick={() => {setIsShowingSearchResults(false)}}>
-            Cancel
-          </Button>
-          }
-        </SearchRow>
-        { isShowingSearchResults &&
-        <SearchResultsContainer>
-          <h3>Search results</h3>
-          <ul>
-          {searchResults.map((result, index) => (
-            <SearchResult key={index}
-              onClick={() => { goToPageBySongId(result.id) }}
-            >
-              {result.title}
-            </SearchResult>
-          ))}
-          </ul>
-        </SearchResultsContainer>
-        }
-        {isEditingTitle ? (
-          <EditableTitle
-            type="text"
-            value={song.title}
-            onChange={(event) => {setSong({ ...song, title: event.target.value })}}
-            onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title }); setIsEditingTitle(false);}}}
-            autoFocus
-          />
-        ) : (
-          <SongTitle onClick={() => {setIsEditingTitle(true)}}>Title: {song?.title}</SongTitle>
-        )}
-        <Row>
-          <Col>
-          {isPlaying ? (
-            <StopButton id="stop" onClick={() => {playSong(song)}}/>
-          ) : (
-            <PlayButton id="play" onClick={() => {playSong(song)}}/>
-          )}
-          </Col>
-          <Col>
-            <SongInfoRow>
-              <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
-              <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
-                <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
-              </SongDetail>
-              { isEditingKey &&
-                <KeyMenu handleOptionClick={handleOptionClick} />
+      <Layout>
+        <SiderStyled
+          breakpoint="lg"
+          collapsedWidth="0"
+          onBreakpoint={(broken) => {
+            console.log(broken);
+          }}
+          onCollapse={(collapsed, type) => {
+            console.log(collapsed, type);
+          }}
+        >
+          <div className="logo" />
+          <Menu
+            mode="inline"
+            defaultSelectedKeys={['4']}
+            items={[
+              {
+                key: 1,
+                icon: React.createElement(HomeFilled),
+                label: `Home`,
+              },
+              {
+                key: 2,
+                icon: React.createElement(SearchOutlined),
+                label: `Search`,
+              },
+              {
+                key: 3,
+                icon: React.createElement(ContainerFilled),
+                label: `Library`,
               }
-                { isEditingBpm &&
-                <BPMSliderWrapper>
-                  <TempoSlider
-                    type="range"
-                    min="60"
-                    max="240"
-                    value={bpm}
-                    onChange={handleTempoChange}
-                  />
-                </BPMSliderWrapper>
+            ]}
+          />
+        </SiderStyled>
+        <MainLayout>
+          <Main className="main" onKeyDown={handleKeyDown}>
+            {(isOnSearchTab && !isEditingSong) &&
+            <SearchView>
+              <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
+                <Search
+                  allowClear
+                  placeholder="Search all music"
+                  loading={isSearching}
+                  onSearch={handleSearch}
+                  value={enteredSearchText}
+                  onChange={e => {setEnteredSearchText(e.target.value); handleSearchInputChange(e)}}
+                />
+                { isShowingSearchResults &&
+                <CancelButton type="link" onClick={() => {setIsShowingSearchResults(false)}}>
+                  Cancel
+                </CancelButton>
                 }
-            </SongInfoRow>
-          </Col>
-          <Col>
-            <Button
-              type="primary"
-              onClick={handleSave}
-              loading={isSaving}
-              disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
-            >
-              Save
-            </Button>
-          </Col>
-        </Row>
-        <TracksContainer id="tracks-container">
-          {song.tracks.map((track, index) => (
-          <TrackTab id={`track-${index}`}
-            className={`${selectedTrackIndex === index ? ' selected' : ''}`}
-            onClick={() => {selectTrack(index)}}
-          >
-            {track.title}
-          </TrackTab>
-          ))}
-          <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
-        </TracksContainer>
-        <TrackContent>
-            {/* { isRecording
-            ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
-            : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
-            } */}
-            <WaveformContainer>
-              <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
-              <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
-              <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
-              <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
-              {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
-            </WaveformContainer>
-            <ProgramGrid
-              song={song}
-              setSong={setSong}
-              selectedTrackIndex={selectedTrackIndex}
-              selectedSectionIndex={selectedSectionIndex}
-              selectedNoteIndex={selectedNoteIndex}
-              setSelectedNoteIndex={setSelectedNoteIndex}
-            />
-            <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} />
-            <PianoKeys playNote={playNote} />
-            {/* <div className="sheet-music">
-                <div className="staff"></div>
-                <div className="notes"></div>
-                <div className="playhead"></div>
-            </div> */}
-        </TrackContent>
-      </Main>
-    </>
+              </SearchRow>
+              { !isEnteringSearch && enteredSearchText !== '' && (isShowingSearchResults || isOnSearchTab) &&
+              <SearchResultsContainer>
+                <h3>Search results</h3>
+                <ul>
+                {searchResults.map((result, index) => (
+                  <SearchResult key={index}
+                    onClick={() => { goToPageBySongId(result.id) }}
+                  >
+                    {result.title}
+                  </SearchResult>
+                ))}
+                </ul>
+                { searchResults.length === 0 &&
+                <div>
+                  <h3>Couldn't find anything for</h3>
+                  <h3>"{enteredSearchText}"</h3>
+                  <p>Let's make a new song called "{enteredSearchText}"!</p>
+                  <CreateSongButton onClick={e => {handleNewSongSelect()}}>
+                    Create "{enteredSearchText}"
+                  </CreateSongButton>
+                </div>
+                }
+              </SearchResultsContainer>
+              }
+              </SearchView>
+            }
+            <SongEditingContainer className={!isEditingSong ? 'hidden' : ''}>
+              <SongEditingHeader>
+                <EditButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
+                    <DownOutlined />
+                </EditButton>
+                <Art art={art} onClick={() => {alert('ok yeah');setIsEditingSongArt(!isEditingSongArt)}} />
+                {isEditingTitle ? (
+                  <EditableTitle
+                    type="text"
+                    value={song.title}
+                    onChange={(event) => {setSong({ ...song, title: event.target.value })}}
+                    onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title }); setIsEditingTitle(false);}}}
+                    autoFocus
+                  />
+                ) : (
+  EditFilled,
+                  <SongTitle onClick={() => { if(!isEditingSong)return; setIsEditingTitle(true) }}>Title: {song?.title} <EditFilled/></SongTitle>
+                )}
+                {isPlaying ? (
+                  <PauseButton id="stop" onClick={() => {playSong(song)}}/>
+                ) : (
+                  <PlayButton id="play" onClick={() => {playSong(song)}}/>
+                )}
+              </SongEditingHeader>
+              <SongEditToolsRow>
+                <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
+                <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
+                  <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
+                </SongDetail>
+                { isEditingKey &&
+                  <KeyMenu handleOptionClick={handleOptionClick} />
+                }
+                  { isEditingBpm &&
+                  <BPMSliderWrapper>
+                    <TempoSlider
+                      type="range"
+                      min="60"
+                      max="240"
+                      value={bpm}
+                      onChange={handleTempoChange}
+                    />
+                  </BPMSliderWrapper>
+                  }
+              </SongEditToolsRow>
+              <TracksContainer id="tracks-container">
+                {song.tracks.map((track, index) => (
+                <TrackTab id={`track-${index}`}
+                  className={`${selectedTrackIndex === index ? ' selected' : ''}`}
+                  onClick={() => {selectTrack(index)}}
+                >
+                  {track.title}
+                </TrackTab>
+                ))}
+                <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
+              </TracksContainer>
+              <TrackContent>
+                  {/* { isRecording
+                  ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
+                  : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
+                  } */}
+                  <WaveformContainer>
+                    <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
+                    <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
+                    <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
+                    <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
+                    {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
+                  </WaveformContainer>
+                  <ProgramGrid
+                    song={song}
+                    setSong={setSong}
+                    selectedTrackIndex={selectedTrackIndex}
+                    selectedSectionIndex={selectedSectionIndex}
+                    selectedNoteIndex={selectedNoteIndex}
+                    setSelectedNoteIndex={setSelectedNoteIndex}
+                  />
+                  <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
+                  
+                  { isEditingSongArt &&
+                    <ArtEditorContainer>
+                      <ArtEditor art={art} setArt={setArt} />
+                    </ArtEditorContainer>
+                  }
+
+                  {/* <PianoKeys playNote={playNote} /> */}
+
+                  {/* <div className="sheet-music">
+                      <div className="staff"></div>
+                      <div className="notes"></div>
+                      <div className="playhead"></div>
+                  </div> */}
+              </TrackContent>
+            </SongEditingContainer>
+            <SongRow className={isEditingSong ? 'hidden' : ''}>
+              <Col>
+                <EditButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
+                  { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
+                </EditButton>
+              </Col>
+              <Col>
+                  <Art art={art} />
+              </Col>
+              <Col>
+                <SongTitle onClick={() => {setIsEditingSong(!isEditingSong)}}>Title: {song?.title}</SongTitle>
+              </Col>
+              <Col>
+                { isEditingSong &&
+                <SaveButton
+                  type="primary"
+                  onClick={handleSave}
+                  loading={isSaving}
+                  disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+                >
+                  <SaveFilled />
+                </SaveButton>
+                }
+              </Col>
+              <Col>
+              {isPlaying ? (
+                <PauseButton id="stop" onClick={() => {playSong(song)}}/>
+              ) : (
+                <PlayButton id="play" onClick={() => {playSong(song)}}/>
+              )}
+              </Col>
+            </SongRow>
+            <TabBar className={isEditingSong ? 'hidden' : ''}>
+              <Tab className={selectedTabIndex === 0 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(0)}}><div><HomeFilled /></div>Home</Tab>
+              <Tab className={selectedTabIndex === 1 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(1)}}><div><SearchOutlined/></div> Search</Tab>
+              <Tab className={selectedTabIndex === 2 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(2)}}><div><ContainerFilled /></div>Library</Tab>
+            </TabBar>
+          </Main>
+        </MainLayout>
+      </Layout>
+    </ThemeProvider>
   )
 }
 

@@ -19,7 +19,7 @@ const Cell = styled.button`
   box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5);
   width: 64px;
   height: 64px;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   /* border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
   /* border: 2px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
   border-radius: 10px;
@@ -32,6 +32,11 @@ const Cell = styled.button`
     `
     background-color: #35CCFD;
   `}
+
+  &.selected {
+    background-color: ${props => props.theme.element.programGrid.cellSelectedBackgroundColor};
+    /* border: 2px solid #ff0000; */
+  }
 `;
 
 const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionIndex, selectedNoteIndex, setSelectedNoteIndex }) => {
@@ -139,6 +144,7 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
   // }, [selectedCell, song, setSong, history, historyIndex]);
 
   const handleCellClick = (index) => {
+    setSelectedNoteIndex(index);
     if (selectedCell === index) {
       const trackIndex = Math.floor(selectedCell / song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes.length);
       const noteIndex = selectedCell % song?.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes.length;
@@ -160,11 +166,11 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
       setHistoryIndex(historyIndex + 1);
       setSelectedCell(null);
       console.log('set setSelectedNoteIndex to null')
-      setSelectedNoteIndex(null);
+      // setSelectedNoteIndex(null);
     } else {
       setSelectedCell(index);
       console.log('set setSelectedNoteIndex to ', index)
-      setSelectedNoteIndex(index);
+      // setSelectedNoteIndex(index);
     }
   };
       
@@ -214,6 +220,7 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
                   selected={isSelected}
                   filled={filled}
                   onClick={() => handleCellClick(index)}
+                  className={noteIndex === selectedTrackIndex ? 'selected' : ''}
                 >
                   {noteName}
                 </Cell>
