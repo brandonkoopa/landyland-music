@@ -8,15 +8,18 @@ import Image from 'next/image'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import PianoKeys from './ui_instruments/PianoKeys'
-import bandMates from './json/band-mates.json'
 import exampleSong from './json/example-song.json'
-import emtpySong from './json/empty-song.json'
 import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
 import Gamepad from './components/Gamepad'
 import Art from './components/Art'
 import ArtEditor from './components/ArtEditor'
 import WaveformButton from './components/WaveformButton'
+import PlayButton from './components/PlayButton'
+import SaveButton from './components/SaveButton'
+import PauseButton from './components/PauseButton'
+import RecordButton from './components/RecordButton'
+// import Authenticate from './Authenticate'
 import {
   SaveFilled,
   EditFilled,
@@ -27,19 +30,39 @@ import {
   UpOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Layout, Menu } from 'antd'
-const { Header, Content, Footer, Sider } = Layout;
 const { Search } = Input;
 
-const MainLayout = styled(Layout)`
-  height: 100vh;
-`
+import { Amplify } from 'aws-amplify';
+
+// import { withAuthenticator } from '@aws-amplify/ui-react';
+// import '@aws-amplify/ui-react/styles.css';
+// import awsExports from './aws-exports';
+// Amplify.configure(awsExports);
+
 const Main = styled.main`
   background-color: ${props => props.theme.color.appBackgroundColor};
   color: #fff;
-  justify-content: flex-start;
+  display: block;
   /* font-family: "Press Start 2P"; */
+  height: 100vh;
+  padding: 0;
+`
+const PageTitle = styled.h2`
+  font-size 16px;
+`
+const HomeView = styled.div`
+  position: absolute;
+  padding: 18px;
+  width: 100%;
 `
 const SearchView = styled.div`
+  position: absolute;
+  padding: 18px;
+  width: 100%;
+  `
+const LibraryView = styled.div`
+  position: absolute;
+  padding: 18px;
   width: 100%;
 `
 const TabBar = styled.div`
@@ -50,10 +73,10 @@ const TabBar = styled.div`
   width: 100%;
   z-index: 100;
   transform: translateY(0);
-  transition: transform 1s;
+  transition: transform 0.6s;
 
   &.hidden {
-    transform: translateY(100px);
+    transform: translateY(75px);
   }
 
   /* Styles for screens smaller than a tablet */
@@ -74,33 +97,21 @@ const Tab = styled.div`
     color: ${props => props.theme.element.tab.selectedColor};
   }
 `;
+// const Boombox = styled.div`
+//   align-items: center;
+//   display: grid;
+//   grid-template-columns: 46px 32px 1fr 40px;
+//   column-gap: 0px;
+//   width: 100%;
+//   margin: 16px 0 8px;
+//   opacity: 1;
+//   transition: all 0.5s;
 
-const SiderStyled= styled(Sider)`
-  position: absolute !important;
-  bottom: 0px;
-  top: 0px;
-  z-index: 100;
-
-  /* Styles for screens smaller than a tablet */
-  @media only screen and (max-width: 768px) {
-    display: none;
-  }
-`
-const SongRow = styled.div`
-  align-items: center;
-  display: grid;
-  grid-template-columns: 46px 32px 1fr 40px 30px;
-  column-gap: 0px;
-  width: 100%;
-  margin: 16px 0 8px;
-  opacity: 1;
-  transition: all 1s;
-
-  &.hidden {
-    opacity: 0;
-    transform: translateY(500px);
-  }
-`
+//   &.hidden {
+//     opacity: 0;
+//     transform: translateY(500px);
+//   }
+// `
 
 const ArtEditorContainer = styled.div`
   /* position: absolute; */
@@ -123,15 +134,16 @@ const EditableTitle = styled.input`
   border: none;
   outline: none;
 `;
-const SongEditingContainer = styled.div`
+const SongContainer = styled.div`
   background-color: ${props => props.theme.color.appBackgroundColor};
+  border-radius: 8px 8px 0 0;
   transform: translateY(0);
-  opacity: 1;
-  transition: all 1s;
+  padding: 8px;
+  transition: all 0.5s;
 
   &.hidden {
-    opacity: 0;
-    transform: translateY(1000px);
+    /* opacity: 0; */
+    transform: translateY(calc(100vh - 110px));
   }
 `
 const SongEditToolsRow = styled.div`
@@ -147,36 +159,29 @@ const SongDetail = styled.span`
   padding: 8px;
   border: 1px solid #999;
   border-radius: 8px;
-  /* background-color: rgba(255, 255, 255, 0.5); */
-  /* box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5); */
+
   background-color: #ebebeb;
   vertical-align: middle;
-`
-const SaveButton = styled(Button)`
-  background-color: #00B4EE;
-  color: #fff !important;
-  opacity: 1;
-  font-size: 23px;
-  padding: 0;
-  background-color: transparent;
-  border: 0;
-  box-shadow: none !important;
-  transform: translateY(-6px);
-
-  :disabled {
-    opacity: 0.25;
-  }
 `
 const SongEditingHeader = styled.div`
   display: grid;
   grid-template-columns: 64px 32px 1fr 30px;
   column-gap: 16px;
 `
-const EditButton = styled(Button)`
+const SongCaretButton = styled(Button)`
   color: ${props => props.theme.color.controlIconColor};
   outline: 0;
   border: none;
   -moz-outline-style: none;
+
+  &:focus {
+    outline: 0;
+    border: none;
+  }
+
+  :not(:disabled):active {
+    color: ${props => props.theme.color.controlIconColor};
+  }
 `
 const CreateSongButton = styled(Button)`
   background-color: #00B4EE;
@@ -184,59 +189,6 @@ const CreateSongButton = styled(Button)`
 `
 const CancelButton = styled(Button)`
   color: #fff;
-`
-const PlayButton = styled.button`
-  border: 0;
-  width: 30px;
-  height: 30px;
-  background-color: transparent;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  &:before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 58%;
-    transform: translate(-50%, -50%);
-    width: 0;
-    height: 0;
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-left: 20px solid ${props => props.theme.color.controlIconColor};
-  }
-`;
-
-const PauseButton = styled.button`
-  border: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: transparent;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  &:before,
-  &:after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 40%;
-    transform: translate(-50%, -50%);
-    width: 4px;
-    height: 14px;
-    background-color: ${props => props.theme.color.controlIconColor};
-  }
-
-  &:after {
-    left: 60%;
-  }
 `
 const BPMSliderWrapper = styled.div`
   position: absolute;
@@ -284,90 +236,6 @@ const TrackContent = styled.div`
   border-right: 1px solid #999; */
   padding: 8px 0 0;
 `
-
-const RecordButton = styled.button`
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #fff;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-  position: relative;
-  overflow: hidden;
-
-  &:before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #fff;
-  }
-
-  &:after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: #ff0000;
-  }
-`;
-
-const RecordingButton = styled.button`
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #ff0000;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-  position: relative;
-  overflow: hidden;
-
-  &:before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #fff;
-  }
-
-  &:after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: #ff0000;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0% {
-      transform: translate(-50%, -50%) scale(0.8);
-      opacity: 1;
-    }
-    50% {
-      transform: translate(-50%, -50%) scale(1.2);
-      opacity: 0.5;
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(0.8);
-      opacity: 1;
-    }
-  }
-`;
 
 const SearchRow = styled.div`
   display: grid;
@@ -430,7 +298,9 @@ const Home = () => {
   const [isEditingBpm, setIsEditingBpm] = useState(false)
   const [isEditingKey, setIsEditingKey] = useState(false)
 
+  const isOnHomeTab = selectedTabIndex === 0
   const isOnSearchTab = selectedTabIndex === 1
+  const isOnLibraryTab = selectedTabIndex === 2
 
   const selectedWaveform = song.tracks[selectedTrackIndex].waveform
 
@@ -463,11 +333,7 @@ const Home = () => {
   };
 
   const onMIDIMessage = (event) => {
-    console.log('onMIDIMessage')
     const [command, note, velocity] = event.data;
-    console.log('event.data : ', event.data)
-    console.log('command : ', command)
-    console.log('note : ', note)
 
     if (command === 144) {
       // MIDI note on message
@@ -1042,220 +908,195 @@ const Home = () => {
           <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" />
           <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
       </Head>
-      <Layout>
-        <SiderStyled
-          breakpoint="lg"
-          collapsedWidth="0"
-          onBreakpoint={(broken) => {
-            console.log(broken);
-          }}
-          onCollapse={(collapsed, type) => {
-            console.log(collapsed, type);
-          }}
-        >
-          <div className="logo" />
-          <Menu
-            mode="inline"
-            defaultSelectedKeys={['4']}
-            items={[
-              {
-                key: 1,
-                icon: React.createElement(HomeFilled),
-                label: `Home`,
-              },
-              {
-                key: 2,
-                icon: React.createElement(SearchOutlined),
-                label: `Search`,
-              },
-              {
-                key: 3,
-                icon: React.createElement(ContainerFilled),
-                label: `Library`,
-              }
-            ]}
-          />
-        </SiderStyled>
-        <MainLayout>
-          <Main className="main" onKeyDown={handleKeyDown}>
-            {(isOnSearchTab && !isEditingSong) &&
-            <SearchView>
-              <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
-                <Search
-                  allowClear
-                  placeholder="Search all music"
-                  loading={isSearching}
-                  onSearch={handleSearch}
-                  value={enteredSearchText}
-                  onChange={e => {setEnteredSearchText(e.target.value); handleSearchInputChange(e)}}
-                />
-                { isShowingSearchResults &&
-                <CancelButton type="link" onClick={() => {setIsShowingSearchResults(false)}}>
-                  Cancel
-                </CancelButton>
-                }
-              </SearchRow>
-              { !isEnteringSearch && enteredSearchText !== '' && (isShowingSearchResults || isOnSearchTab) &&
-              <SearchResultsContainer>
-                <h3>Search results</h3>
-                <ul>
-                {searchResults.map((result, index) => (
-                  <SearchResult key={index}
-                    onClick={() => { goToPageBySongId(result.id) }}
-                  >
-                    {result.title}
-                  </SearchResult>
-                ))}
-                </ul>
-                { searchResults.length === 0 &&
-                <div>
-                  <h3>Couldn't find anything for</h3>
-                  <h3>"{enteredSearchText}"</h3>
-                  <p>Let's make a new song called "{enteredSearchText}"!</p>
-                  <CreateSongButton onClick={e => {handleNewSongSelect()}}>
-                    Create "{enteredSearchText}"
-                  </CreateSongButton>
-                </div>
-                }
-              </SearchResultsContainer>
-              }
-              </SearchView>
+      <Main className="main" onKeyDown={handleKeyDown}>
+        {(isOnHomeTab && !isEditingSong) &&
+        <HomeView>
+          <PageTitle>Home</PageTitle>
+          {/* <Authenticate/> */}
+        </HomeView>
+        }
+        {(isOnSearchTab && !isEditingSong) &&
+        <SearchView>
+          <PageTitle>Search</PageTitle>
+          <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
+            <Search
+              allowClear
+              placeholder="Search all music"
+              loading={isSearching}
+              onSearch={handleSearch}
+              value={enteredSearchText}
+              onChange={e => {setEnteredSearchText(e.target.value); handleSearchInputChange(e)}}
+            />
+            { isShowingSearchResults &&
+            <CancelButton type="link" onClick={() => {setIsShowingSearchResults(false)}}>
+              Cancel
+            </CancelButton>
             }
-            <SongEditingContainer className={!isEditingSong ? 'hidden' : ''}>
-              <SongEditingHeader>
-                <EditButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
-                    <DownOutlined />
-                </EditButton>
-                <Art art={art} onClick={() => {alert('ok yeah');setIsEditingSongArt(!isEditingSongArt)}} />
-                {isEditingTitle ? (
-                  <EditableTitle
-                    type="text"
-                    value={song.title}
-                    onChange={(event) => {setSong({ ...song, title: event.target.value })}}
-                    onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title }); setIsEditingTitle(false);}}}
-                    autoFocus
-                  />
-                ) : (
-  EditFilled,
-                  <SongTitle onClick={() => { if(!isEditingSong)return; setIsEditingTitle(true) }}>Title: {song?.title} <EditFilled/></SongTitle>
-                )}
-                {isPlaying ? (
-                  <PauseButton id="stop" onClick={() => {playSong(song)}}/>
-                ) : (
-                  <PlayButton id="play" onClick={() => {playSong(song)}}/>
-                )}
-              </SongEditingHeader>
-              <SongEditToolsRow>
-                <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
-                <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
-                  <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
-                </SongDetail>
-                { isEditingKey &&
-                  <KeyMenu handleOptionClick={handleOptionClick} />
-                }
-                  { isEditingBpm &&
-                  <BPMSliderWrapper>
-                    <TempoSlider
-                      type="range"
-                      min="60"
-                      max="240"
-                      value={bpm}
-                      onChange={handleTempoChange}
-                    />
-                  </BPMSliderWrapper>
-                  }
-              </SongEditToolsRow>
-              <TracksContainer id="tracks-container">
-                {song.tracks.map((track, index) => (
-                <TrackTab id={`track-${index}`}
-                  className={`${selectedTrackIndex === index ? ' selected' : ''}`}
-                  onClick={() => {selectTrack(index)}}
-                >
-                  {track.title}
-                </TrackTab>
-                ))}
-                <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
-              </TracksContainer>
-              <TrackContent>
-                  {/* { isRecording
-                  ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
-                  : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
-                  } */}
-                  <WaveformContainer>
-                    <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
-                    <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
-                    <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
-                    <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
-                    {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
-                  </WaveformContainer>
-                  <ProgramGrid
-                    song={song}
-                    setSong={setSong}
-                    selectedTrackIndex={selectedTrackIndex}
-                    selectedSectionIndex={selectedSectionIndex}
-                    selectedNoteIndex={selectedNoteIndex}
-                    setSelectedNoteIndex={setSelectedNoteIndex}
-                  />
-                  <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
-                  
-                  { isEditingSongArt &&
-                    <ArtEditorContainer>
-                      <ArtEditor art={art} setArt={setArt} />
-                    </ArtEditorContainer>
-                  }
+          </SearchRow>
+          { !isEnteringSearch && enteredSearchText !== '' && (isShowingSearchResults || isOnSearchTab) &&
+          <SearchResultsContainer>
+            <h3>Search results</h3>
+            <ul>
+            {searchResults.map((result, index) => (
+              <SearchResult key={index}
+                onClick={() => { goToPageBySongId(result.id) }}
+              >
+                {result.title}
+              </SearchResult>
+            ))}
+            </ul>
+            { searchResults.length === 0 &&
+            <div>
+              <h3>Couldn't find anything for</h3>
+              <h3>"{enteredSearchText}"</h3>
+              <p>Let's make a new song called "{enteredSearchText}"!</p>
+              <CreateSongButton onClick={e => {handleNewSongSelect()}}>
+                Create "{enteredSearchText}"
+              </CreateSongButton>
+            </div>
+            }
+          </SearchResultsContainer>
+          }
+          </SearchView>
+        }
+        {(isOnLibraryTab && !isEditingSong) &&
+        <LibraryView>
+          <PageTitle>Library</PageTitle>
+        </LibraryView>
+        }
+        <SongContainer className={!isEditingSong ? 'hidden' : ''}>
+          <SongEditingHeader>
+            <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
+              { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
+            </SongCaretButton>
+            <Art art={art} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
+            {isEditingTitle ? (
+              <EditableTitle
+                type="text"
+                value={song.title}
+                onChange={(event) => {setSong({ ...song, title: event.target.value })}}
+                onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title }); setIsEditingTitle(false);}}}
+                autoFocus
+              />
+            ) : (
+EditFilled,
+              <SongTitle onClick={() => { if(!isEditingSong){setIsEditingSong(!isEditingSong);return;} setIsEditingTitle(true) }}>Title: {song?.title} {isEditingSong && <EditFilled/>}</SongTitle>
+            )}
+            {isPlaying ? (
+              <PauseButton id="stop" onClick={() => {playSong(song)}}/>
+            ) : (
+              <PlayButton id="play" onClick={() => {playSong(song)}}/>
+            )}
+          </SongEditingHeader>
+          <Col>
+            { isEditingSong &&
+            <SaveButton
+              type="primary"
+              onClick={handleSave}
+              loading={isSaving}
+              disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+            >
+              <SaveFilled />
+            </SaveButton>
+            }
+          </Col>
+          <SongEditToolsRow>
+            <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
+            <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
+              <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
+            </SongDetail>
+            { isEditingKey &&
+              <KeyMenu handleOptionClick={handleOptionClick} />
+            }
+              { isEditingBpm &&
+              <BPMSliderWrapper>
+                <TempoSlider
+                  type="range"
+                  min="60"
+                  max="240"
+                  value={bpm}
+                  onChange={handleTempoChange}
+                />
+              </BPMSliderWrapper>
+              }
+          </SongEditToolsRow>
+          <TracksContainer id="tracks-container">
+            {song.tracks.map((track, index) => (
+            <TrackTab id={`track-${index}`}
+              className={`${selectedTrackIndex === index ? ' selected' : ''}`}
+              onClick={() => {selectTrack(index)}}
+            >
+              {track.title}
+            </TrackTab>
+            ))}
+            <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
+          </TracksContainer>
+          <TrackContent>
+              {/* { isRecording
+              ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
+              : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
+              } */}
+              <WaveformContainer>
+                <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
+                <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
+                <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
+                <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
+                {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
+              </WaveformContainer>
+              <ProgramGrid
+                song={song}
+                setSong={setSong}
+                selectedTrackIndex={selectedTrackIndex}
+                selectedSectionIndex={selectedSectionIndex}
+                selectedNoteIndex={selectedNoteIndex}
+                setSelectedNoteIndex={setSelectedNoteIndex}
+              />
+              <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
+              
+              { isEditingSongArt &&
+                <ArtEditorContainer>
+                  <ArtEditor art={art} setArt={setArt} />
+                </ArtEditorContainer>
+              }
 
-                  {/* <PianoKeys playNote={playNote} /> */}
+              {/* <PianoKeys playNote={playNote} /> */}
 
-                  {/* <div className="sheet-music">
-                      <div className="staff"></div>
-                      <div className="notes"></div>
-                      <div className="playhead"></div>
-                  </div> */}
-              </TrackContent>
-            </SongEditingContainer>
-            <SongRow className={isEditingSong ? 'hidden' : ''}>
-              <Col>
-                <EditButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
-                  { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
-                </EditButton>
-              </Col>
-              <Col>
-                  <Art art={art} />
-              </Col>
-              <Col>
-                <SongTitle onClick={() => {setIsEditingSong(!isEditingSong)}}>Title: {song?.title}</SongTitle>
-              </Col>
-              <Col>
-                { isEditingSong &&
-                <SaveButton
-                  type="primary"
-                  onClick={handleSave}
-                  loading={isSaving}
-                  disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
-                >
-                  <SaveFilled />
-                </SaveButton>
-                }
-              </Col>
-              <Col>
-              {isPlaying ? (
-                <PauseButton id="stop" onClick={() => {playSong(song)}}/>
-              ) : (
-                <PlayButton id="play" onClick={() => {playSong(song)}}/>
-              )}
-              </Col>
-            </SongRow>
-            <TabBar className={isEditingSong ? 'hidden' : ''}>
-              <Tab className={selectedTabIndex === 0 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(0)}}><div><HomeFilled /></div>Home</Tab>
-              <Tab className={selectedTabIndex === 1 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(1)}}><div><SearchOutlined/></div> Search</Tab>
-              <Tab className={selectedTabIndex === 2 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(2)}}><div><ContainerFilled /></div>Library</Tab>
-            </TabBar>
-          </Main>
-        </MainLayout>
-      </Layout>
+              {/* <div className="sheet-music">
+                  <div className="staff"></div>
+                  <div className="notes"></div>
+                  <div className="playhead"></div>
+              </div> */}
+          </TrackContent>
+        </SongContainer>
+        {/* <Boombox className={isEditingSong ? 'hidden' : ''}>
+          <Col>
+            <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
+              { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
+            </SongCaretButton>
+          </Col>
+          <Col>
+              <Art art={art} />
+          </Col>
+          <Col>
+            <SongTitle onClick={() => {setIsEditingSong(!isEditingSong)}}>Title: {song?.title}</SongTitle>
+          </Col>
+          <Col>
+          {isPlaying ? (
+            <PauseButton id="stop" onClick={() => {playSong(song)}}/>
+          ) : (
+            <PlayButton id="play" onClick={() => {playSong(song)}}/>
+          )}
+          </Col>
+        </Boombox> */}
+        <TabBar id="app-tabs" className={isEditingSong ? 'hidden' : ''}>
+          <Tab className={selectedTabIndex === 0 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(0)}}><div><HomeFilled /></div>Home</Tab>
+          <Tab className={selectedTabIndex === 1 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(1)}}><div><SearchOutlined/></div> Search</Tab>
+          <Tab className={selectedTabIndex === 2 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(2)}}><div><ContainerFilled /></div>Library</Tab>
+        </TabBar>
+      </Main>
     </ThemeProvider>
   )
 }
 
 export default withTheme(Home)
-
+// export default withAuthenticator(withTheme(Home))

@@ -1,0 +1,29 @@
+{
+  "resourceName": "users",
+  "tableName": "users",
+  "partitionKey": {
+    "fieldName": "userId",
+    "fieldType": "string"
+  },
+  "gsi": [
+    {
+      "name": "usersByUserId",
+      "partitionKey": {
+        "fieldName": "userId",
+        "fieldType": "string"
+      },
+      "sortKey": {
+        "fieldName": "username",
+        "fieldType": "string"
+      }
+    },
+    {
+      "name": "username",
+      "partitionKey": {
+        "fieldName": "username",
+        "fieldType": "string"
+      }
+    }
+  ],
+  "triggerFunctions": []
+}

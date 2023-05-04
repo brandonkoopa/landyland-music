@@ -20,9 +20,9 @@ const defaultArt = [  '. . . . . . . . . . . . . . . .',  '. . . . . . . . . . .
 const ArtEditor = ({ art = defaultArt }) => {
   return (
     <ArtContainer>
-      {Array.from(Array(16), (_, row) => (
+      {Array.from(Array(32), (_, row) => (
         <div key={row} style={{ display: "flex" }}>
-          {Array.from(Array(27), (_, col) => (
+          {Array.from(Array(32), (_, col) => (
             <div
               key={col}
               style={{

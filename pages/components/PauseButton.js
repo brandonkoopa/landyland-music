@@ -1,0 +1,39 @@
+import React from 'react'
+import styled from 'styled-components';
+
+const StyledPauseButton = styled.button`
+  border: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &:before,
+  &:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 14px;
+    background-color: ${props => props.theme.color.controlIconColor};
+  }
+
+  &:after {
+    left: 60%;
+  }
+`;
+
+const PauseButton = ({id, onClick, children}) => {
+  return (
+    <StyledPauseButton id={id} onClick={onClick}>{children}</StyledPauseButton>
+  )
+}
+
+export default PauseButton;

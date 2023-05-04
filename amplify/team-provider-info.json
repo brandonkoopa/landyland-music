@@ -1,0 +1,32 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-landyland-dev-205529-authRole",
+      "UnauthRoleArn": "arn:aws:iam::760025179128:role/amplify-landyland-dev-205529-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::760025179128:role/amplify-landyland-dev-205529-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-landyland-dev-205529-deployment",
+      "UnauthRoleName": "amplify-landyland-dev-205529-unauthRole",
+      "StackName": "amplify-landyland-dev-205529",
+      "StackId": "arn:aws:cloudformation:us-east-2:760025179128:stack/amplify-landyland-dev-205529/95c12af0-e955-11ed-8aea-0aba80d5dc39",
+      "AmplifyAppId": "d1qyioh2h9xwj9"
+    },
+    "categories": {
+      "function": {
+        "landyland72fb5ffc": {
+          "deploymentBucketName": "amplify-landyland-dev-205529-deployment",
+          "s3Key": "amplify-builds/landyland72fb5ffc-612b67784b3852333568-build.zip"
+        }
+      },
+      "auth": {
+        "landyland33bf8ff1": {}
+      },
+      "storage": {
+        "users": {}
+      },
+      "api": {
+        "user": {}
+      }
+    }
+  }
+}
