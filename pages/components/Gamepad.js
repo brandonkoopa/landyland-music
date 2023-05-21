@@ -116,7 +116,7 @@ const ButtonRow = styled.div`
 const Button = styled.button`
   width: 50px;
   height: 50px;
-  border: 1px solid black;
+  border: 1px solid #000;
   border-radius: 50%;
   background-color: #333;
   margin: 0 16px;

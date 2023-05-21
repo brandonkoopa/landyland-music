@@ -9,9 +9,11 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import PianoKeys from './ui_instruments/PianoKeys'
 import exampleSong from './json/example-song.json'
+import SectionEditor from './components/SectionEditor'
 import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
 import Gamepad from './components/Gamepad'
+import SectionTab from './components/SectionTab'
 import Art from './components/Art'
 import ArtEditor from './components/ArtEditor'
 import WaveformButton from './components/WaveformButton'
@@ -19,6 +21,9 @@ import PlayButton from './components/PlayButton'
 import SaveButton from './components/SaveButton'
 import PauseButton from './components/PauseButton'
 import RecordButton from './components/RecordButton'
+import SongTypeSelect from './components/SongTypeSelect'
+import Ambient from './components/Ambient'
+
 // import Authenticate from './Authenticate'
 import {
   SaveFilled,
@@ -65,6 +70,24 @@ const LibraryView = styled.div`
   padding: 18px;
   width: 100%;
 `
+const SectionTabs = styled.div`
+  margin: 8px 0;
+
+  span {
+    margin-right: 8px;
+  }
+`
+const NewSectionTab = styled.span`
+  border: 1px solid #fff;
+  border-radius: 4px;
+  position: relative;
+  display: inline-block;
+  line-height: 28px;
+  height: 32px;
+  overflow: hidden;
+  text-align: center;
+  width: 64px;
+`
 const TabBar = styled.div`
   display: inline-flex;
   position: fixed;
@@ -89,7 +112,7 @@ const Tab = styled.div`
   color: ${props => props.theme.element.tab.color};
   flex: 1;
   text-align: center;
-  padding: 4px 8px 8px;
+  padding: 8px;
   font-size: 16px;
   font-weight: 600;
 
@@ -97,21 +120,6 @@ const Tab = styled.div`
     color: ${props => props.theme.element.tab.selectedColor};
   }
 `;
-// const Boombox = styled.div`
-//   align-items: center;
-//   display: grid;
-//   grid-template-columns: 46px 32px 1fr 40px;
-//   column-gap: 0px;
-//   width: 100%;
-//   margin: 16px 0 8px;
-//   opacity: 1;
-//   transition: all 0.5s;
-
-//   &.hidden {
-//     opacity: 0;
-//     transform: translateY(500px);
-//   }
-// `
 
 const ArtEditorContainer = styled.div`
   /* position: absolute; */
@@ -119,12 +127,10 @@ const ArtEditorContainer = styled.div`
   /* top: 64px; */
 `
 
-const Col = styled.div`
-  
-`
+const Col = styled.div``
 
-const SongTitle = styled.h2`
-  font-size: 16px;
+const SongTitle = styled.span`
+  font-size: 11px;
   margin: 8px 0 0;
 `
 
@@ -141,9 +147,9 @@ const SongContainer = styled.div`
   padding: 8px;
   transition: all 0.5s;
 
-  &.hidden {
+  &.collapsed {
     /* opacity: 0; */
-    transform: translateY(calc(100vh - 110px));
+    transform: translateY(calc(100vh - 112px));
   }
 `
 const SongEditToolsRow = styled.div`
@@ -164,15 +170,27 @@ const SongDetail = styled.span`
   vertical-align: middle;
 `
 const SongEditingHeader = styled.div`
+  padding: 8px;
+  border-radius: 4px;
   display: grid;
-  grid-template-columns: 64px 32px 1fr 30px;
+  grid-template-columns: 32px 32px 1fr 32px;
   column-gap: 16px;
+  background-color: rgba(255,255,255,0.15);
+  transition: all 0.5s;
+  
+
+  &.editing {
+    background-color: transparent;
+  }
+  
 `
 const SongCaretButton = styled(Button)`
   color: ${props => props.theme.color.controlIconColor};
   outline: 0;
   border: none;
   -moz-outline-style: none;
+
+  button:focus {outline:0;}
 
   &:focus {
     outline: 0;
@@ -197,20 +215,17 @@ const BPMSliderWrapper = styled.div`
   box-shadow: 0px 3px 6px rgba(0,0,0,0.16);
   transform: translate(46px,49px);
   z-index: 100;
-`;
+`
 const TempoSlider = styled.input`
   margin-right: 10px;
-`;
-
+`
 const TracksContainer = styled.ul`
   margin: 8px 0 0;
   padding: 0;
 `
-
 const WaveformContainer = styled.div`
   text-align: center;
 `
-
 const TrackTab = styled.li`
   display: inline-block;
   list-style-type: none;
@@ -268,9 +283,10 @@ const SearchResult = styled.li`
   margin: 0; /* Remove margins */
 `
 
-const Home = () => {
+const Index = () => {
   const router = useRouter()
   const [song, setSong] = useState(exampleSong)
+  const [time, setTime] = useState(0)
   const [art, setArt] = useState([])
   const [isEditingSongArt, setIsEditingSongArt] = useState(true)
   const [enteredSearchText, setEnteredSearchText] = useState('');
@@ -298,6 +314,9 @@ const Home = () => {
   const [isEditingBpm, setIsEditingBpm] = useState(false)
   const [isEditingKey, setIsEditingKey] = useState(false)
 
+  const [isOpen, setIsOpen] = useState(false)
+  const [currentInputType, setCurrentInputType] = useState('')
+
   const isOnHomeTab = selectedTabIndex === 0
   const isOnSearchTab = selectedTabIndex === 1
   const isOnLibraryTab = selectedTabIndex === 2
@@ -307,8 +326,6 @@ const Home = () => {
   let playheadPosition = 0;
 
   const apiBaseUrl = 'https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev'
-
-  
 
   useEffect(() => {
     loadSongFromUrl()
@@ -320,6 +337,23 @@ const Home = () => {
       console.log('WebMIDI is not supported in this browser.')
     }
   }, []);
+
+  useEffect(() => {
+    /* <Section notes={song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes} /> */
+    /* <Section notes={song.tracks[0].sections[0].notes} /> */
+    console.log('-')
+    console.log('song : ', song)
+    console.log('song?.tracks[0]? : ', song?.tracks[0])
+    // console.log('song.tracks[0].sections[0].notes : ', song.tracks[0].sections[0].notes)
+    // console.log('song.tracks[0].sections[0].notes : ', song.tracks[0].sections[0].notes)
+    // console.log('song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes : ', song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes)
+    console.log('-')
+  }, [song]);
+
+  const handleInputTypeItemClick = (inputType) => {
+    setCurrentInputType(inputType);
+    setIsOpen(false);
+  }
 
   const onMIDISuccess = (midiAccess) => {
     console.log('onMIDISuccess')
@@ -429,7 +463,7 @@ const Home = () => {
       "time": null,
       "frequency": null,
       "noteName": null,
-      "stepFromRoot": null,
+      "halfStepFromRoot": null,
     }))
 
     return emptyNotes
@@ -441,8 +475,8 @@ const Home = () => {
   
     //   // Copy over existing notes
     //   track.notes.forEach(note => {
-    //     if (note.stepFromRoot !== null && note.time !== null) {
-    //       const index = note.stepFromRoot + (note.time / 100) * (numberOfNotesPerSection / 4);
+    //     if (note.halfStepFromRoot !== null && note.time !== null) {
+    //       const index = note.halfStepFromRoot + (note.time / 100) * (numberOfNotesPerSection / 4);
     //       if (index >= 0 && index < numberOfNotesPerSection) {
     //         newNotes[index] = note;
     //       }
@@ -453,7 +487,7 @@ const Home = () => {
     //   if (newNotes.length < numberOfNotesPerSection) {
     //     // Fill remaining notes with empty notes
     //     const emptyNote = {
-    //       stepFromRoot: null,
+    //       halfStepFromRoot: null,
     //       time: null,
     //       noteName: null,
     //       frequency: null
@@ -631,9 +665,10 @@ const Home = () => {
     return closestNote[0];
   }
 
-  const playSong = songToPlay => {
+  const togglePlaySong = songToPlay => {
     // Stop any currently playing audio
-    Tone.Transport.stop()
+    // Tone.Transport.stop()
+    Tone.Transport.pause()
     Tone.Transport.clear()
 
     clearAllTones()
@@ -646,6 +681,16 @@ const Home = () => {
     setIsRecording(false);
     setIsPlaying(true);
 
+    if (song.type === 'structured') {
+      playStructuredSong(songToPlay)
+    } if (song.type === 'generative') {
+      playGenerativeSong(songToPlay)
+    } else {
+      playStructuredSong(songToPlay)
+    }
+  }
+
+  function playStructuredSong(songToPlay) {
     let newTones = [...tones]
 
     songToPlay.tracks?.forEach((track) => {
@@ -654,9 +699,11 @@ const Home = () => {
         const interval = 60 / bpm;
 
         if (track.type === 'strings' || track.type === 'keys') {
+          console.log('track : ', track)
+          console.log('track.waveform : ', track.waveform)
           const synth = new Tone.Synth({
             oscillator: {
-              type: track.waveform || 'square',
+              type: track.waveform ?? 'square',
             },
           }).toDestination();
           let currentTime = Tone.now();
@@ -721,10 +768,128 @@ const Home = () => {
           // start the sequence
           drumSequence.start(0);
         }
+
+        // const sectionEndTime = section.endTime || section.startTime + notes.length * interval;
+        // const sectionDuration = sectionEndTime - section.startTime;
+  
+        // // Update currentTime and schedule the next section
+        // Tone.Transport.scheduleOnce((time) => {
+        //   currentTime = sectionEndTime;
+        //   setTime(currentTime);
+        // }, `+${sectionDuration}`);
+  
+        // // Start the transport if it's not already started
+        // if (!Tone.Transport.state === 'started') {
+        //   Tone.Transport.start();
+        // }
       })
     })
 
     setTones(newTones)
+  }  
+
+  function playGenerativeSong(songToPlay) {
+    let newTones = [];
+  
+    Tone.start();
+  
+    Tone.Transport.scheduleOnce(() => {
+      songToPlay.tracks?.forEach((track) => {
+        track.sections?.forEach((section) => {
+          const notes = section?.notes;
+  
+          if (track.type === 'synth') {
+            const synth = initializeSynth();
+            newTones.push(synth);
+  
+            const loop = initializeLoop(synth);
+            newTones.push(loop);
+          } else if (track.type === 'drums') {
+            const kick = new Tone.MembraneSynth({
+              pitchDecay: 0.05,
+              octaves: 5,
+              oscillator: { type: 'sine' },
+              envelope: { sustain: 0, release: 0.5 },
+            }).toDestination();
+            newTones.push(kick);
+  
+            const snare = new Tone.NoiseSynth({
+              noise: { type: 'white' },
+              envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+            }).toDestination();
+            newTones.push(snare);
+  
+            const hiHat = new Tone.NoiseSynth({
+              noise: { type: 'pink' },
+              envelope: { attack: 0.001, decay: 0.1, sustain: 0 },
+            }).toDestination();
+            newTones.push(hiHat);
+  
+            const drumLoop = new Tone.Loop((time) => {
+              const randomNote = getRandomDrumNote();
+              const noteName = randomNote.noteName;
+              if (noteName === 'kick') {
+                kick.triggerAttackRelease('C1', '8n', time);
+              } else if (noteName === 'snare') {
+                snare.triggerAttackRelease(randomNote, time);
+              } else if (noteName === 'hihat') {
+                hiHat.triggerAttackRelease(randomNote, time);
+              }
+            }, '8n');
+            newTones.push(drumLoop);
+          }
+        });
+      });
+  
+      setTones([...tones, ...newTones]);
+    });
+  
+    Tone.Transport.start();
+  }
+  
+  const initializeSynth = () => {
+    const synth = new Tone.PolySynth().toDestination();
+    const pan = Math.random() * 2 - 1;
+    const reverb = new Tone.Reverb({
+      decay: Math.random() * 10 + 2,
+      wet: Math.random() * 0.5 + 0.1,
+    }).toDestination();
+    synth.connect(reverb);
+    synth.pan.value = pan;
+  
+    return synth;
+  };
+  
+  const initializeLoop = (synth) => {
+    return new Tone.Loop((time) => {
+      const chord = getRandomChord();
+      const duration = Tone.Time('2n') * Math.floor(Math.random() * 4) + 1;
+      synth.triggerAttackRelease(chord, duration, time);
+  
+      setTimeout(() => {
+        synth.disconnect();
+        synth.dispose();
+      }, duration * 1000 + 2000);
+    }, '8n');
+  };  
+  
+  function getRandomNote() {
+    // Implement your logic to generate a random note or chord
+    // For example, you can use an array of available notes and chords and select one randomly
+    const availableNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const availableOctaves = [3, 4, 5];
+    const randomNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
+    const randomOctave = availableOctaves[Math.floor(Math.random() * availableOctaves.length)];
+    return {
+      frequency: `${randomNote}${randomOctave}`,
+    };
+  }
+  
+  function getRandomDrumNote() {
+    // Implement your logic to generate a random drum note
+    // For example, you can use an array of available drum sounds and select one randomly
+    const availableDrumSounds = ["16n", "32n", "64n"];
+    return availableDrumSounds[Math.floor(Math.random() * availableDrumSounds.length)];
   }
   
   function getNotePosition(noteName) {
@@ -870,9 +1035,29 @@ const Home = () => {
   }
 
   const setWaveform = waveform => {
-    const updatedTracks = [ ...song?.tracks ]
-    updatedTracks[selectedTrackIndex].waveform = waveform
-    setSong({ ...song, tracks: updatedTracks })
+    const updatedTracks = [...song.tracks];
+    updatedTracks[selectedTrackIndex].waveform = waveform;
+    const updatedSong = { ...song, tracks: updatedTracks };
+    setSong(updatedSong);
+  }
+  
+  const createNewSectionForAllTracks = () => {
+    const updatedTracks = song?.tracks?.map((track) => {
+      const updatedSections = [...track.sections];
+      updatedSections.push({
+        notes: getEmptyNotes(song)
+      });
+      return { ...track, sections: updatedSections };
+    });
+  
+    setSong({ ...song, tracks: updatedTracks });
+
+    // select select the new track
+    setSelectedSectionIndex(selectedSectionIndex + 1)
+  }
+
+  const selectSection = sectionIndex => {
+    setSelectedSectionIndex(sectionIndex)
   }
 
   const selectTrack = trackIndex => {
@@ -905,13 +1090,14 @@ const Home = () => {
     <ThemeProvider theme={theme}>
       <Head>
           <title>Landy Land - Music</title>
-          <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" />
-          <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
+          {/* <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" /> */}
+          {/* <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" /> */}
       </Head>
       <Main className="main" onKeyDown={handleKeyDown}>
         {(isOnHomeTab && !isEditingSong) &&
         <HomeView>
           <PageTitle>Home</PageTitle>
+          <button onClick={(event) => {setSong({ ...song, type: 'ambient' }); setIsEditingSong(true)}}>Chill</button>
           {/* <Authenticate/> */}
         </HomeView>
         }
@@ -964,13 +1150,13 @@ const Home = () => {
           <PageTitle>Library</PageTitle>
         </LibraryView>
         }
-        <SongContainer className={!isEditingSong ? 'hidden' : ''}>
-          <SongEditingHeader>
+        <SongContainer className={!isEditingSong ? 'collapsed' : ''}>
+          <SongEditingHeader className={isEditingSong ? 'editing' : ''}>
             <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
               { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
             </SongCaretButton>
             <Art art={art} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
-            {isEditingTitle ? (
+            { isEditingTitle ? (
               <EditableTitle
                 type="text"
                 value={song.title}
@@ -983,111 +1169,113 @@ EditFilled,
               <SongTitle onClick={() => { if(!isEditingSong){setIsEditingSong(!isEditingSong);return;} setIsEditingTitle(true) }}>Title: {song?.title} {isEditingSong && <EditFilled/>}</SongTitle>
             )}
             {isPlaying ? (
-              <PauseButton id="stop" onClick={() => {playSong(song)}}/>
+              <PauseButton id="stop" onClick={() => {togglePlaySong(song)}}/>
             ) : (
-              <PlayButton id="play" onClick={() => {playSong(song)}}/>
+              <PlayButton id="play" onClick={() => {togglePlaySong(song)}}/>
             )}
           </SongEditingHeader>
-          <Col>
-            { isEditingSong &&
-            <SaveButton
-              type="primary"
-              onClick={handleSave}
-              loading={isSaving}
-              disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
-            >
-              <SaveFilled />
-            </SaveButton>
-            }
-          </Col>
-          <SongEditToolsRow>
-            <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
-            <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
-              <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
-            </SongDetail>
-            { isEditingKey &&
-              <KeyMenu handleOptionClick={handleOptionClick} />
-            }
-              { isEditingBpm &&
-              <BPMSliderWrapper>
-                <TempoSlider
-                  type="range"
-                  min="60"
-                  max="240"
-                  value={bpm}
-                  onChange={handleTempoChange}
-                />
-              </BPMSliderWrapper>
+          <div id="song-container-content">
+            {/* <SongTypeSelect setSong={setSong} /> */}
+            { song.type === 'generative' ?
+            <Ambient />
+            : <div>
+            <Col id="structured">
+              { isEditingSong &&
+              <SaveButton
+                type="primary"
+                onClick={handleSave}
+                loading={isSaving}
+                disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+              >
+                <SaveFilled />
+              </SaveButton>
               }
-          </SongEditToolsRow>
-          <TracksContainer id="tracks-container">
-            {song.tracks.map((track, index) => (
-            <TrackTab id={`track-${index}`}
-              className={`${selectedTrackIndex === index ? ' selected' : ''}`}
-              onClick={() => {selectTrack(index)}}
-            >
-              {track.title}
-            </TrackTab>
-            ))}
-            <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
-          </TracksContainer>
-          <TrackContent>
-              {/* { isRecording
-              ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
-              : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
-              } */}
-              <WaveformContainer>
-                <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
-                <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
-                <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
-                <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
-                {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
-              </WaveformContainer>
-              <ProgramGrid
-                song={song}
-                setSong={setSong}
-                selectedTrackIndex={selectedTrackIndex}
-                selectedSectionIndex={selectedSectionIndex}
-                selectedNoteIndex={selectedNoteIndex}
-                setSelectedNoteIndex={setSelectedNoteIndex}
-              />
-              <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
-              
-              { isEditingSongArt &&
-                <ArtEditorContainer>
-                  <ArtEditor art={art} setArt={setArt} />
-                </ArtEditorContainer>
+            </Col>
+            <SongEditToolsRow>
+              <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
+              <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
+                <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
+              </SongDetail>
+              { isEditingKey &&
+                <KeyMenu handleOptionClick={handleOptionClick} />
               }
+                { isEditingBpm &&
+                <BPMSliderWrapper>
+                  <TempoSlider
+                    type="range"
+                    min="60"
+                    max="240"
+                    value={bpm}
+                    onChange={handleTempoChange}
+                  />
+                </BPMSliderWrapper>
+                }
+            </SongEditToolsRow>
+            <TracksContainer id="tracks-container">
+              {song.tracks?.map((track, index) => (
+              <TrackTab id={`track-${index}`}
+                className={`${selectedTrackIndex === index ? ' selected' : ''}`}
+                onClick={() => {selectTrack(index)}}
+              >
+                {track.title}
+              </TrackTab>
+              ))}
+              <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
+            </TracksContainer>
+            <TrackContent>
+                {/* { isRecording
+                ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
+                : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
+                } */}
+                <WaveformContainer>
+                  <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
+                  <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
+                  <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
+                  <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
+                  {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
+                </WaveformContainer>
+                <SectionTabs id="section-tabs-container">
+                  { song.tracks[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
+                  <SectionTab
+                    notes={section?.notes}
+                    isSelected={sectionIndex === selectedSectionIndex}
+                    onClick={() => {selectSection(sectionIndex)}}
+                  />
+                  ))}
+                  <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
+                </SectionTabs>
+                <SectionEditor time={time} section={song.tracks[selectedTrackIndex].sections[selectedSectionIndex]} />
+                {/* <ProgramGrid
+                  song={song}
+                  setSong={setSong}
+                  selectedTrackIndex={selectedTrackIndex}
+                  selectedSectionIndex={selectedSectionIndex}
+                  selectedNoteIndex={selectedNoteIndex}
+                  setSelectedNoteIndex={setSelectedNoteIndex}
+                /> */}
 
-              {/* <PianoKeys playNote={playNote} /> */}
+                {/* <InputTypeDropdown isOpen setIsOpen currentInputType handleInputTypeItemClick /> */}
 
-              {/* <div className="sheet-music">
-                  <div className="staff"></div>
-                  <div className="notes"></div>
-                  <div className="playhead"></div>
-              </div> */}
-          </TrackContent>
+                <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
+                
+                { isEditingSongArt &&
+                  <ArtEditorContainer>
+                    <ArtEditor art={art} setArt={setArt} />
+                  </ArtEditorContainer>
+                }
+
+                {/* <PianoKeys playNote={playNote} /> */}
+
+                {/* <div className="sheet-music">
+                    <div className="staff"></div>
+                    <div className="notes"></div>
+                    <div className="playhead"></div>
+                </div> */}
+            </TrackContent>
+          </div>
+          }
+          </div>
         </SongContainer>
-        {/* <Boombox className={isEditingSong ? 'hidden' : ''}>
-          <Col>
-            <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
-              { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
-            </SongCaretButton>
-          </Col>
-          <Col>
-              <Art art={art} />
-          </Col>
-          <Col>
-            <SongTitle onClick={() => {setIsEditingSong(!isEditingSong)}}>Title: {song?.title}</SongTitle>
-          </Col>
-          <Col>
-          {isPlaying ? (
-            <PauseButton id="stop" onClick={() => {playSong(song)}}/>
-          ) : (
-            <PlayButton id="play" onClick={() => {playSong(song)}}/>
-          )}
-          </Col>
-        </Boombox> */}
         <TabBar id="app-tabs" className={isEditingSong ? 'hidden' : ''}>
           <Tab className={selectedTabIndex === 0 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(0)}}><div><HomeFilled /></div>Home</Tab>
           <Tab className={selectedTabIndex === 1 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(1)}}><div><SearchOutlined/></div> Search</Tab>
@@ -1098,5 +1286,5 @@ EditFilled,
   )
 }
 
-export default withTheme(Home)
+export default withTheme(Index)
 // export default withAuthenticator(withTheme(Home))
