@@ -11,6 +11,7 @@ const DropdownContainer = styled.div`
 const StyledSelect = styled(Select)`
   border: 1px solid #fff;
   border-radius: 4px;
+  width: 112px;
   
   :where(.css-dev-only-do-not-override-yp8pcc).ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector {
     color: #fff;
