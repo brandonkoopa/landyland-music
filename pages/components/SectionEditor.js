@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 const SectionContainer = styled.span`
+  background-color: rgba(0, 0, 0, 0.2);
   border: 1px solid #fff;
   border-radius: 4px;
   position: relative;
@@ -13,6 +14,7 @@ const SectionContainer = styled.span`
 `;
 
 const NoteSquare = styled.div`
+  border: 1px solid #000;
   position: absolute;
   width: ${props => props.size}px;
   height: ${props => props.size}px;
@@ -24,17 +26,16 @@ const NoteSquare = styled.div`
   cursor: ${props => (props.selected ? 'pointer' : 'default')};
 `;
 
-const SectionEditor = ({ section, time }) => {
-  const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
-
+const SectionEditor = ({ section, time, selectedNoteIndex, setSelectedNoteIndex }) => {
   const handleNoteClick = (index) => {
     if (selectedNoteIndex === index) {
-      // Delete the note if it's already selected
-      section.notes[index] = {
-        noteName: null,
-        time: null,
-        frequency: null,
-      };
+      // setSelectedNoteIndex(null);
+      // // Delete the note if it's already selected
+      // section.notes[index] = {
+      //   noteName: null,
+      //   time: null,
+      //   frequency: null,
+      // };
     } else {
       setSelectedNoteIndex(index);
     }
@@ -57,7 +58,9 @@ const SectionEditor = ({ section, time }) => {
   };
 
   const handleNoteDrag = (index, e) => {
+    console.log('handleNoteDrag')
     if (selectedNoteIndex === index) {
+      console.log('selectedNoteIndex === index')
       const { movementX, movementY } = e.nativeEvent;
 
       // Change note's noteLetter and frequency values with snapping
@@ -105,7 +108,7 @@ const SectionEditor = ({ section, time }) => {
         }
 
         return (
-          <NoteSquare
+          <NoteSquare draggable
             key={index}
             size={size}
             left={left}
@@ -114,7 +117,7 @@ const SectionEditor = ({ section, time }) => {
             selected={index === selectedNoteIndex}
             isPlaying={index === selectedNoteIndex && time >= section.startTime && time <= section.endTime}
             onMouseDown={(e) => handleNoteClick(index, e)}
-            onMouseMove={(e) => handleNoteDrag(index, e)}
+            // onMouseMove={(e) => handleNoteDrag(index, e)}
             // onMouseUp={() => setSelectedNoteIndex(null)}
           />
         );

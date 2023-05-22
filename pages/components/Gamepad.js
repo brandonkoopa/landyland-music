@@ -154,14 +154,14 @@ const Gamepad = ({instrumentType, handleButtonPress}) => {
         </ControllerLeft>
         <ControllerRight>
           <ButtonRow>
-            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'hihat' : 'B')}}>{instrumentType === 'drums' ? 'H' : 'vii'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'hihat' : 'VII')}}>{instrumentType === 'drums' ? 'H' : 'vii'}</Button>
           </ButtonRow>
           <ButtonRow>
-            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'G')}}>{instrumentType === 'drums' ? 'S' : 'IV'}</Button>
-            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'E')}}>{instrumentType === 'drums' ? 'S' : 'V'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'V')}}>{instrumentType === 'drums' ? 'S' : 'IV'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'IV')}}>{instrumentType === 'drums' ? 'S' : 'V'}</Button>
           </ButtonRow>
           <ButtonRow>
-            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'C')}}>{instrumentType === 'drums' ? 'K' : 'I'}</Button>
+            <Button onClick={() => {handleButtonPress(instrumentType === 'drums' ? 'snare' : 'I')}}>{instrumentType === 'drums' ? 'K' : 'I'}</Button>
           </ButtonRow>
         </ControllerRight>
     </GamepadWrapper>

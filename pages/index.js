@@ -22,6 +22,7 @@ import SaveButton from './components/SaveButton'
 import PauseButton from './components/PauseButton'
 import RecordButton from './components/RecordButton'
 import SongTypeSelect from './components/SongTypeSelect'
+import TrackTypeSelect from './components/TrackTypeSelect'
 import Ambient from './components/Ambient'
 
 // import Authenticate from './Authenticate'
@@ -70,9 +71,15 @@ const LibraryView = styled.div`
   padding: 18px;
   width: 100%;
 `
+const SectionHolder = styled.div`
+  margin-bottom: 16px;
+  text-align: center;
+  width: 100%;
+`
 const SectionTabs = styled.div`
   margin: 8px 0;
-
+  text-align: center;
+  
   span {
     margin-right: 8px;
   }
@@ -227,6 +234,7 @@ const WaveformContainer = styled.div`
   text-align: center;
 `
 const TrackTab = styled.li`
+  text-transform: capitalize;
   display: inline-block;
   list-style-type: none;
   padding: 0;
@@ -400,6 +408,38 @@ const Index = () => {
 
   const getFrequency = (note) => {
     return 440 * Math.pow(2, (note - 69) / 12);
+  };
+
+  const getFrequencyByLetter = (note) => {
+    const notes = {
+      C: 261.63,
+      'C#': 277.18,
+      D: 293.66,
+      'D#': 311.13,
+      E: 329.63,
+      F: 349.23,
+      'F#': 369.99,
+      G: 392.00,
+      'G#': 415.30,
+      A: 440.00,
+      'A#': 466.16,
+      B: 493.88,
+      'C+': 523.25,
+      'C#+': 554.37,
+      'D+': 587.33,
+      'D#+': 622.25,
+      'E+': 659.25,
+      'F+': 698.46,
+      'F#+': 739.99,
+      'G+': 783.99,
+      'G#+': 830.61,
+      'A+': 880.00,
+      'A#+': 932.33,
+      'B+': 987.77,
+      'C++': 1046.50,
+    };
+    
+    return notes[note];
   };
 
   const playMidiNote = (note) => {
@@ -1078,12 +1118,75 @@ const Index = () => {
     setIsEditingKey(false)
   }
 
-  const handleGamepadButtonPress = (noteName) => {
-    writeNoteAtIndex({index: selectedNoteIndex, note: {
-      time: null,
-      frequency: null,
-      noteName: noteName
-    }})
+  const keyToNote = {
+    a: 'C',
+    w: 'C#',
+    s: 'D',
+    e: 'D#',
+    d: 'E',
+    f: 'F',
+    t: 'F#',
+    g: 'G',
+    y: 'G#',
+    h: 'A',
+    u: 'A#',
+    j: 'B',
+    k: 'C+',
+    o: 'C#+',
+    l: 'D+',
+    p: 'D#+',
+    ';': 'B+',
+    "'": 'C++',
+  };
+  
+  const getNoteNameByStep = (step, keyNote) => {
+    console.log('getNoteNameByStep()')
+    console.log('step : ', step)
+    console.log('keyNote : ', keyNote)
+    const keyNoteIndex = Object.values(keyToNote).indexOf(keyNote);
+    const noteNames = Object.keys(keyToNote);
+  
+    // Calculate the index of the target note in the noteNames array
+    let targetNoteIndex = keyNoteIndex;
+    for (let i = 0; i < step.length; i++) {
+      if (step[i] === 'I') {
+        targetNoteIndex += 0;
+      } else if (step[i] === 'V') {
+        targetNoteIndex += 7;
+      } else if (step[i] === 'IV') {
+        targetNoteIndex += 5;
+      } else if (step[i] === 'II') {
+        targetNoteIndex += 2;
+      } else if (step[i] === 'III') {
+        targetNoteIndex += 4;
+      } else if (step[i] === 'VI') {
+        targetNoteIndex += 9;
+      } else if (step[i] === 'VII') {
+        targetNoteIndex += 11;
+      }
+    }
+  
+    // Wrap the target note index within the range of the noteNames array
+    targetNoteIndex %= noteNames.length;
+    if (targetNoteIndex < 0) {
+      targetNoteIndex += noteNames.length;
+    }
+  
+    // Return the note name corresponding to the target note index
+    return keyToNote[noteNames[targetNoteIndex]];
+  };  
+
+  const handleGamepadButtonPress = (btnName) => {
+    const noteAtIndex = song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes[selectedNoteIndex]
+
+    writeNoteAtIndex({
+      index: selectedNoteIndex,
+      note: {
+        time: noteAtIndex.time,
+        noteName: getNoteNameByStep(btnName, song.keyLetter) ?? null,
+        frequency: getFrequencyByLetter(getNoteNameByStep(btnName, song.keyLetter)) ?? null,
+      }
+    })
   }
 
   return (
@@ -1217,7 +1320,8 @@ EditFilled,
                 className={`${selectedTrackIndex === index ? ' selected' : ''}`}
                 onClick={() => {selectTrack(index)}}
               >
-                {track.title}
+                {/* {track.title} */}
+                {track.type}
               </TrackTab>
               ))}
               <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
@@ -1227,6 +1331,7 @@ EditFilled,
                 ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
                 : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
                 } */}
+                <TrackTypeSelect song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
                 <WaveformContainer>
                   <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
                   <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
@@ -1244,7 +1349,16 @@ EditFilled,
                   ))}
                   <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
                 </SectionTabs>
-                <SectionEditor time={time} section={song.tracks[selectedTrackIndex].sections[selectedSectionIndex]} />
+                { song.tracks[selectedTrackIndex]?.sections &&
+                  <SectionHolder>
+                    <SectionEditor
+                      time={time}
+                      section={song?.tracks[selectedTrackIndex]?.sections[selectedSectionIndex]}
+                      selectedNoteIndex={selectedNoteIndex}
+                      setSelectedNoteIndex={setSelectedNoteIndex}
+                    />
+                  </SectionHolder>
+                }
                 {/* <ProgramGrid
                   song={song}
                   setSong={setSong}

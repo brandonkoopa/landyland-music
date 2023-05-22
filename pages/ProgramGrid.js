@@ -175,7 +175,7 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
   };
       
   const getFrequency = (note) => {
-      const notes = {
+    const notes = {
       C: 261.63,
       'C#': 277.18,
       D: 293.66,
@@ -201,9 +201,10 @@ const ProgramGrid = ({ song, setSong={}, selectedTrackIndex, selectedSectionInde
       'A#+': 932.33,
       'B+': 987.77,
       'C++': 1046.50,
-      };
-      return notes[note];
-      };
+    };
+    
+    return notes[note];
+  };
       
       return (
         <div>
