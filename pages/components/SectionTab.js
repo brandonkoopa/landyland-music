@@ -28,6 +28,8 @@ const NoteSquare = styled.div`
 `;
 
 const SectionTab = ({ notes, isSelected, onClick }) => {
+  if (!notes) return (<div></div>)
+  
   const minFrequency = Math.min(...notes.map(note => note.frequency));
   const maxFrequency = Math.max(...notes.map(note => note.frequency));
   const frequencyRange = maxFrequency - minFrequency;
@@ -42,7 +44,7 @@ const SectionTab = ({ notes, isSelected, onClick }) => {
 
   return (
     <SectionContainer className={isSelected ? 'selected' : ''} onClick={onClick}>
-      {notes.map((note, index) => {
+      {notes?.map((note, index) => {
         const left = (index / (notes.length - 1)) * 64;
         let bottom = 0;
         let size = Math.min(32, 64 / notes.length);

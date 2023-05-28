@@ -16,6 +16,7 @@ const Pixel = styled.div`
 `;
 
 const ArtEditor = ({ art, setArt, width, height }) => {
+  if (!art) return (<div></div>)
   const [selectedColor, setSelectedColor] = useState('black');
   const [isDrawing, setIsDrawing] = useState(false);
   const [isErasing, setIsErasing] = useState(false);

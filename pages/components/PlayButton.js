@@ -23,7 +23,7 @@ const StyledPlayButton = styled.button`
     height: 0;
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
-    border-left: 20px solid ${props => props.theme.color.controlIconColor};
+    border-left: 20px solid ${props => props.theme.color.controlIconColor || '#fff'};
   }
 `;
 
