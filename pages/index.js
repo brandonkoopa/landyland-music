@@ -749,6 +749,9 @@ const Index = () => {
               type: track.waveform ?? 'square',
             },
           }).toDestination();
+
+          synth.context.resume()
+          
           let currentTime = Tone.now();
 
           newTones.push(synth)
