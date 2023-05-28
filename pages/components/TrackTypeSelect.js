@@ -13,7 +13,17 @@ const StyledSelect = styled(Select)`
   border-radius: 4px;
   width: 112px;
   
-  :where(.css-dev-only-do-not-override-yp8pcc).ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector {
+
+  &.ant-select-open {
+    .ant-select-selection-item {
+      color: #fff;
+    }
+  }
+  
+  :where(.css-dev-only-do-not-override-yp8pcc).ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector,
+  :where(.css-dev-only-do-not-override-yp8pcc).ant-select .ant-select-selection-placeholder,
+  :where(.css-dev-only-do-not-override-yp8pcc).ant-select-single .ant-select-selector,
+  :where(.css-dev-only-do-not-override-yp8pcc).ant-select .ant-select-arrow {
     color: #fff;
   }
   
@@ -21,14 +31,9 @@ const StyledSelect = styled(Select)`
     border: 0;
     background-color: transparent;
   }
-
-  :where(.css-dev-only-do-not-override-yp8pcc).ant-select-single .ant-select-selector {
-    color: #fff;
-  }
-  
 `;
 
-const TrackTypeSelect = ({ song, setSong, trackIndex }) => {
+const TrackTypeSelect = ({ value, song, setSong, trackIndex }) => {
   const handleOptionChange = (option) => {
     // setSong((prevSong) => ({ ...prevSong, type: option }));
     const updatedTracks = [ ...song?.tracks ]
@@ -46,6 +51,7 @@ const TrackTypeSelect = ({ song, setSong, trackIndex }) => {
   return (
     <DropdownContainer>
       <StyledSelect
+        value={value}
         defaultValue="Structured" // Set the default value here
         placeholder="Select Type"
         onChange={handleOptionChange}

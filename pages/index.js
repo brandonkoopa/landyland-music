@@ -246,6 +246,8 @@ const TrackTab = styled.li`
   padding: 8px;
   background-color: transparent;
   background-color: #666;
+  user-select: none;
+  cursor: pointer;
 
   &.selected {
    background-color: transparent;
@@ -296,6 +298,7 @@ const Index = () => {
   const [song, setSong] = useState(exampleSong)
   const [time, setTime] = useState(0)
   const [art, setArt] = useState([])
+  const [allPossibleTrackTypes, setAllPossibleTrackTypes] = useState(['drums', 'keys', 'strings'])
   const [isEditingSongArt, setIsEditingSongArt] = useState(true)
   const [enteredSearchText, setEnteredSearchText] = useState('');
   const [tones, setTones] = useState([]);
@@ -1104,9 +1107,27 @@ const Index = () => {
     setSelectedTrackIndex(trackIndex)
   }
 
+  const getTrackTypeNotUsedYet = () => {
+    // for (let t = 0; t < song.tracks.length; t++) {
+    for (let t = 0; t < allPossibleTrackTypes.length; t++) {
+      let doesAnyTrackContainThisType = false
+      // if (!allPossibleTrackTypes.includes(song.tracks[t].type)) {
+      for (let i = 0; i < song.tracks.length; i++) {
+        if (song.tracks[i].type === allPossibleTrackTypes[t]) {
+          doesAnyTrackContainThisType = true
+        }
+      }
+      if (!doesAnyTrackContainThisType) {
+        return allPossibleTrackTypes[t]
+      }
+    }
+      // song.tracks[t].type
+  }
+
   const createNewTrack = () => {
     const updatedTracks = [ ...song?.tracks ]
     updatedTracks.push({
+      type: getTrackTypeNotUsedYet(),
       title: `Track ${updatedTracks.length + 1}`,
       notes: getEmptyNotes(song)
     })
@@ -1200,6 +1221,7 @@ const Index = () => {
         {(isOnHomeTab && !isEditingSong) &&
         <HomeView>
           <PageTitle>Home</PageTitle>
+          <button onClick={e => { handleNewSongSelect();setIsEditingSong(true) }}>New Song</button>
           <button onClick={(event) => {setSong({ ...song, type: 'ambient' }); setIsEditingSong(true)}}>Chill</button>
           {/* <Authenticate/> */}
         </HomeView>
@@ -1331,7 +1353,7 @@ EditFilled,
                 ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
                 : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
                 } */}
-                <TrackTypeSelect song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
+                <TrackTypeSelect value={song.tracks[selectedTrackIndex]?.type} song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
                 <WaveformContainer>
                   <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
                   <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
