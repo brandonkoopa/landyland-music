@@ -23,7 +23,7 @@ const StyledPauseButton = styled.button`
     transform: translate(-50%, -50%);
     width: 4px;
     height: 14px;
-    background-color: ${props => props.theme.color.controlIconColor || '#fff'};
+    background-color: ${props => props?.theme?.color?.controlIconColor || '#fff'};
   }
 
   &:after {

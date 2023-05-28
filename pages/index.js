@@ -192,7 +192,7 @@ const SongEditingHeader = styled.div`
   
 `
 const SongCaretButton = styled(Button)`
-  color: ${props => props.theme.color.controlIconColor || '#fff'};
+  color: ${props => props?.theme?.color?.controlIconColor || '#fff'};
   outline: 0;
   border: none;
   -moz-outline-style: none;
@@ -205,7 +205,7 @@ const SongCaretButton = styled(Button)`
   }
 
   :not(:disabled):active {
-    color: ${props => props.theme.color.controlIconColor || '#fff'};
+    color: ${props => props?.theme?.color?.controlIconColor || '#fff'};
   }
 `
 const CreateSongButton = styled(Button)`
