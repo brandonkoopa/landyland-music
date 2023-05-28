@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { withTheme } from 'styled-components'
 import { ThemeProvider } from 'styled-components'
-import theme from './theme'
+import theme from '../styles/theme'
 import * as Tone from 'tone';
 import Image from 'next/image'
 import Head from 'next/head'
