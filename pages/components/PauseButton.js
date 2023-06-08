@@ -14,6 +14,13 @@ const StyledPauseButton = styled.button`
   align-items: center;
   /* margin: 0: */
 
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  background-color: #000;
+
   &:before,
   &:after {
     content: "";

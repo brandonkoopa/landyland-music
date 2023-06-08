@@ -118,9 +118,9 @@ const Button = styled.button`
   height: 50px;
   border: 1px solid #000;
   border-radius: 50%;
-  background-color: #333;
+  background-color: #b21030;
   margin: 0 16px;
-  color: white;
+  color: #000;
   font-size: 16px;
   font-weight: bold;
   text-transform: uppercase;

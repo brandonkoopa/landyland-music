@@ -1,23 +1,52 @@
 import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
+const colors = {
+  'W': '#FFF',
+  '0': '#000',
+  'R': '#CD0E2D',
+  'G': '#20C25D',
+  'B': '#203EC2',
+  'Y': '#EEB949'
+};
+
+const defaultArt = [
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .',
+  '. . . . . . . . . . . . . . . .'
+];
+
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(${(props) => props.width}, 1fr);
   grid-template-rows: repeat(${(props) => props.height}, 1fr);
-  grid-gap: 1px;
+  grid-gap: 0;
   background-color: #f0f0f0;
 `;
 
 const Pixel = styled.div`
-  background-color: ${(props) => props.color || 'transparent'};
-  height: 100%;
+  background-color: ${(props) => colors[props.color] || 'transparent'};
   width: 100%;
+  padding-bottom: 100%;
 `;
 
-const ArtEditor = ({ art, setArt, width, height }) => {
-  if (!art) return (<div></div>)
-  const [selectedColor, setSelectedColor] = useState('black');
+const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
+  const pixels = Array.isArray(art.pixels) ? art.pixels : defaultArt;
+
+  const [selectedColor, setSelectedColor] = useState('0');
   const [isDrawing, setIsDrawing] = useState(false);
   const [isErasing, setIsErasing] = useState(false);
   const prevPixelRef = useRef();
@@ -27,53 +56,69 @@ const ArtEditor = ({ art, setArt, width, height }) => {
   }, [isDrawing, isErasing]);
 
   const handlePixelClick = (row, col) => {
-    let newArt = [...art];
-    if (isErasing) {
-      newArt[row][col] = 'transparent';
-    } else {
-      newArt[row][col] = selectedColor;
-    }
+    const newPixels = [...pixels];
+    const pixelRow = newPixels[row];
+
+    const color = isErasing ? '.' : selectedColor
+
+    const newRow = pixelRow.slice(0, col) + color + pixelRow.slice(col + 1);
+    newPixels[row] = newRow;
+
+    const newArt = {
+      ...art,
+      pixels: newPixels,
+    };
+
     setArt(newArt);
   };
 
   const handlePixelDrag = (row, col) => {
     if (!isDrawing) return;
-    let newArt = [...art];
-    if (prevPixelRef.current) {
-      const [prevRow, prevCol] = prevPixelRef.current;
-      const dx = col - prevCol;
-      const dy = row - prevRow;
-      const steps = Math.max(Math.abs(dx), Math.abs(dy));
-      for (let i = 0; i < steps; i++) {
-        const r = Math.round(prevRow + i * dy / steps);
-        const c = Math.round(prevCol + i * dx / steps);
-        if (r >= 0 && r < height && c >= 0 && c < width) {
-          if (isErasing) {
-            newArt[r][c] = 'transparent';
-          } else {
-            newArt[r][c] = selectedColor;
-          }
-        }
-      }
+  
+    const pixelIndex = row * (width + 1) + col;
+    const newPixels = [...pixels];
+  
+    if (isErasing) {
+      newPixels[pixelIndex] = '.';
     } else {
-      handlePixelClick(row, col);
+      newPixels[pixelIndex] = selectedColor;
     }
-    prevPixelRef.current = [row, col];
-    setArt(newArt);
+  
+    setArt({ ...art, pixels: newPixels });
   };
 
   return (
-    <>
+    <div id="art-editor">
       <div>
-        <input
-          type="color"
-          value={selectedColor}
-          onChange={(e) => setSelectedColor(e.target.value)}
-        />
+        {Object.keys(colors).map((key) => (
+          <button
+            key={key}
+            style={{
+              backgroundColor: colors[key],
+              padding: '5px',
+              margin: '5px',
+              border: selectedColor === key ? '2px solid #000' : 'none'
+            }}
+            onClick={() => setSelectedColor(key)}
+          >
+            {key}
+          </button>
+        ))}
         <button onClick={() => setIsErasing(!isErasing)}>
-          {isErasing ? 'Drawing' : 'Erasing'}
+          {isErasing ? 'Draw' : 'Erase'}
         </button>
-        <button onClick={() => setArt([...art])}>Reset</button>
+        <button
+          onClick={() =>
+            setArt({
+              ...art,
+              pixels: Array(height)
+                .fill('.')
+                .join('')
+            })
+          }
+        >
+          Reset
+        </button>
         <button onClick={() => saveArt()}>Save</button>
       </div>
       <Grid
@@ -89,19 +134,21 @@ const ArtEditor = ({ art, setArt, width, height }) => {
           prevPixelRef.current = null;
         }}
       >
-        {art.map((row, rowIndex) =>
-          row.map((color, colIndex) => (
-            <Pixel
-              key={`${rowIndex},${colIndex}`}
-              color={color}
-              onMouseEnter={() => handlePixelDrag(rowIndex, colIndex)}
-              onClick={() => handlePixelClick(rowIndex, colIndex)}
-            />
-          ))
-        )}
+        {pixels.map((row, rowIndex) => (
+          <div key={rowIndex}>
+            {Array.from(row).map((color, colIndex) => (
+              <Pixel
+                key={`${rowIndex},${colIndex}`}
+                color={color}
+                onMouseEnter={() => handlePixelDrag(rowIndex, colIndex)}
+                onClick={() => handlePixelClick(rowIndex, colIndex)}
+              />
+            ))}
+          </div>
+        ))}
       </Grid>
-    </>
+    </div>
   );
 };
 
-export default ArtEditor
+export default ArtEditor;

@@ -3,11 +3,12 @@ const theme = {
     primary: '#FF5733',
     secondary: '#6C757D',
     appBackgroundColor: '#2d2d2d',
+    songContainer: '#464646',
     controlIconColor: '#fff',
   },
   element: {
     tab: {
-      backgroundColor: '#2d2d2d',
+      backgroundColor: '#1F1F1F',
       color: '#9d9d9d',
       selectedColor: '#fff',
     },

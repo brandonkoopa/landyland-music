@@ -10,6 +10,7 @@ import { useRouter } from 'next/router'
 import PianoKeys from './ui_instruments/PianoKeys'
 import exampleSong from './json/example-song.json'
 import SectionEditor from './components/SectionEditor'
+import BoomboxHandle from './components/BoomboxHandle'
 import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
 import Gamepad from './components/Gamepad'
@@ -51,6 +52,7 @@ const Main = styled.main`
   display: block;
   /* font-family: "Press Start 2P"; */
   height: 100vh;
+  overflow: hidden;
   padding: 0;
 `
 const PageTitle = styled.h2`
@@ -119,11 +121,16 @@ const Tab = styled.div`
   color: ${props => props.theme.element.tab.color};
   flex: 1;
   text-align: center;
-  padding: 8px;
+  padding: 23px 0 32px;
   font-size: 16px;
   font-weight: 600;
 
+  &:not(:last-of-type) {
+    border-right: 1px solid #000;
+  }
+
   &.selected {
+    background: linear-gradient(179.51deg, #1F1F1F 16.46%, #181818 99.58%);
     color: ${props => props.theme.element.tab.selectedColor};
   }
 `;
@@ -148,22 +155,32 @@ const EditableTitle = styled.input`
   outline: none;
 `;
 const SongContainer = styled.div`
-  background-color: ${props => props.theme.color.appBackgroundColor};
+  background-color: ${props => props.theme.color.songContainer};
+  border: 1px solid #000;
   border-radius: 8px 8px 0 0;
-  transform: translateY(0);
-  padding: 8px;
+  transform: translateY(34px);
+  /* padding: 8px; */
   transition: all 0.5s;
 
   &.collapsed {
     /* opacity: 0; */
-    transform: translateY(calc(100vh - 112px));
+    transform: translateY(calc(100vh - 162px));
   }
+`
+const BoomboxHandleRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 124px 1fr;
+  position: absolute;
+  transform: translateY(-25px);
+  right: 0;
+  left: 0;
 `
 const SongEditToolsRow = styled.div`
   display: grid;
   column-gap: 16px;
   grid-template-columns: auto auto auto;
   margin-top: 16px;
+  box-sizing: border-box;
 `
 
 const SongDetail = styled.span`
@@ -180,22 +197,30 @@ const SongEditingHeader = styled.div`
   padding: 8px;
   border-radius: 4px;
   display: grid;
-  grid-template-columns: 32px 32px 1fr 32px;
+  grid-template-columns: 40px 40px 1fr 40px;
   column-gap: 16px;
-  background-color: rgba(255,255,255,0.15);
+  background-color: #464646;
   transition: all 0.5s;
-  
+  margin: 8px;
 
   &.editing {
-    background-color: transparent;
+    /* background-color: transparent; */
+    /* border-radius: 0; */
+    /* margin: 32px 0; */
   }
-  
 `
 const SongCaretButton = styled(Button)`
   color: ${props => props?.theme?.color?.controlIconColor || '#fff'};
   outline: 0;
   border: none;
   -moz-outline-style: none;
+  
+  border: 0;
+  border-radius: 20px;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  background-color: #000;
 
   button:focus {outline:0;}
 
@@ -297,7 +322,6 @@ const Index = () => {
   const router = useRouter()
   const [song, setSong] = useState(exampleSong)
   const [time, setTime] = useState(0)
-  const [art, setArt] = useState([])
   const [allPossibleTrackTypes, setAllPossibleTrackTypes] = useState(['drums', 'keys', 'strings'])
   const [isEditingSongArt, setIsEditingSongArt] = useState(true)
   const [enteredSearchText, setEnteredSearchText] = useState('');
@@ -347,19 +371,73 @@ const Index = () => {
     } else {
       console.log('WebMIDI is not supported in this browser.')
     }
+
+    // Create an interval timer
+    // const interval = setInterval(() => {
+    //   setTime(Tone.Transport.seconds)
+    //   // setTime(Tone.now())
+    // }, 100); // Interval of 1 second (1000 milliseconds)
+
+    // // Clean up the interval on component unmount
+    // return () => {
+    //   clearInterval(interval);
+    // };
   }, []);
 
   useEffect(() => {
-    /* <Section notes={song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes} /> */
-    /* <Section notes={song.tracks[0].sections[0].notes} /> */
-    console.log('-')
     console.log('song : ', song)
-    console.log('song?.tracks[0]? : ', song?.tracks[0])
-    // console.log('song.tracks[0].sections[0].notes : ', song.tracks[0].sections[0].notes)
-    // console.log('song.tracks[0].sections[0].notes : ', song.tracks[0].sections[0].notes)
-    // console.log('song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes : ', song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes)
-    console.log('-')
+    // if song.art doesn't exist or is empty array, set it to blank art
+    if (!song.art) {
+      handleEmptyArt(song)
+    }
+    
   }, [song]);
+  
+  const handleEmptyArt = song => {
+    if (!song.art) {
+      const blankArtPixels = [
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+        '00000000000000000000000000000000',
+      ]
+      let newArt = song.art ?? {}
+      newArt.pixels = blankArtPixels
+      setSong({ ...song, art: newArt })
+    }
+  }
+
+  const setArt = (art) => {
+    setSong({ ...song, art: art })
+  }
 
   const handleInputTypeItemClick = (inputType) => {
     setCurrentInputType(inputType);
@@ -712,7 +790,8 @@ const Index = () => {
     // Stop any currently playing audio
     // Tone.Transport.stop()
     Tone.Transport.pause()
-    Tone.Transport.clear()
+    // Tone.Transport.clear()
+    const currentTime = Tone.Transport.seconds;
 
     clearAllTones()
 
@@ -731,6 +810,8 @@ const Index = () => {
     } else {
       playStructuredSong(songToPlay)
     }
+
+    Tone.Transport.position = currentTime;
   }
 
   function playStructuredSong(songToPlay) {
@@ -758,6 +839,13 @@ const Index = () => {
       
           const noteSequence = new Tone.Sequence(
             (time, note) => {
+              setTime(note.time)
+              // const loopDuration = noteSequence.loopEnd - noteSequence.loopStart;
+              // const adjustedTime = (Tone.Transport.position - noteSequence.loopStart) % loopDuration;
+              // const noteStartTime = note.time;
+              // const noteAdjustedTime = (adjustedTime + noteStartTime) % loopDuration;
+              // setTime(noteAdjustedTime);
+              
               synth.triggerAttackRelease(note.frequency, interval * 0.9, time);
             },
             notes,
@@ -1211,6 +1299,11 @@ const Index = () => {
         frequency: getFrequencyByLetter(getNoteNameByStep(btnName, song.keyLetter)) ?? null,
       }
     })
+
+    if (isPlaying) {
+      togglePlaySong(song)
+      togglePlaySong(song)
+    }
   }
 
   return (
@@ -1229,7 +1322,7 @@ const Index = () => {
           {/* <Authenticate/> */}
         </HomeView>
         }
-        {(isOnSearchTab && !isEditingSong) &&
+        {isOnSearchTab &&
         <SearchView>
           <PageTitle>Search</PageTitle>
           <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
@@ -1279,17 +1372,19 @@ const Index = () => {
         </LibraryView>
         }
         <SongContainer className={!isEditingSong ? 'collapsed' : ''}>
+          <BoomboxHandleRow><div></div><BoomboxHandle/><div></div></BoomboxHandleRow>
           <SongEditingHeader className={isEditingSong ? 'editing' : ''}>
             <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
               { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
             </SongCaretButton>
-            <Art art={art} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
-            { isEditingTitle ? (
+            <Art song={song} art={song.art} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
+            { isEditingTitle && isEditingSong ? (
               <EditableTitle
                 type="text"
                 value={song.title}
                 onChange={(event) => {setSong({ ...song, title: event.target.value })}}
-                onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title }); setIsEditingTitle(false);}}}
+                onBlur={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title });setIsEditingTitle(false);}}}
+                onKeyPress={(event) => {if (event.key === "Enter") {setSong({ ...song, title: song.title });setIsEditingTitle(false);}}}
                 autoFocus
               />
             ) : (
@@ -1341,7 +1436,7 @@ EditFilled,
             </SongEditToolsRow>
             <TracksContainer id="tracks-container">
               {song.tracks?.map((track, index) => (
-              <TrackTab id={`track-${index}`}
+              <TrackTab id={`track-${index}`} key={index}
                 className={`${selectedTrackIndex === index ? ' selected' : ''}`}
                 onClick={() => {selectTrack(index)}}
               >
@@ -1367,6 +1462,7 @@ EditFilled,
                 <SectionTabs id="section-tabs-container">
                   { song.tracks[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
                   <SectionTab
+                    key={sectionIndex}
                     notes={section?.notes}
                     isSelected={sectionIndex === selectedSectionIndex}
                     onClick={() => {selectSection(sectionIndex)}}
@@ -1376,6 +1472,7 @@ EditFilled,
                 </SectionTabs>
                 { song.tracks[selectedTrackIndex]?.sections &&
                   <SectionHolder>
+                    {time}
                     <SectionEditor
                       time={time}
                       section={song?.tracks[selectedTrackIndex]?.sections[selectedSectionIndex]}
@@ -1397,9 +1494,9 @@ EditFilled,
 
                 <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
                 
-                { isEditingSongArt &&
+                { song.art &&
                   <ArtEditorContainer>
-                    <ArtEditor art={art} setArt={setArt} />
+                    <ArtEditor art={song.art} setArt={setArt} />
                   </ArtEditorContainer>
                 }
 

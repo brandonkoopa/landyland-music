@@ -62,7 +62,7 @@ const SectionTab = ({ notes, isSelected, onClick }) => {
 
         return (
           <NoteSquare
-            key={`${note.noteName}-${note.time}`}
+            key={`${note.noteName}-${note.time}-${index}`}
             size={size}
             left={left}
             bottom={bottom}

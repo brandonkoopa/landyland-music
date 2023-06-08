@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components';
+import styled from 'styled-components'
 
 const StyledPlayButton = styled.button`
   border: 0;
@@ -11,9 +11,15 @@ const StyledPlayButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  /* margin: 0: */
 
-  &:before {
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  background-color: #000;
+
+  &::before {
     content: "";
     position: absolute;
     top: 50%;
@@ -27,10 +33,12 @@ const StyledPlayButton = styled.button`
   }
 `;
 
-const PlayButton = ({id, onClick, children}) => {
+const PlayButton = ({ id, onClick, children }) => {
   return (
-    <StyledPlayButton id={id} onClick={onClick}>{children}</StyledPlayButton>
-  )
-}
+    <StyledPlayButton id={id} onClick={onClick}>
+      {children}
+    </StyledPlayButton>
+  );
+};
 
 export default PlayButton;
