@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 const colors = {
-  'W': '#FFF',
+  W: '#FFF',
   '0': '#000',
-  'R': '#CD0E2D',
-  'G': '#20C25D',
-  'B': '#203EC2',
-  'Y': '#EEB949'
+  R: '#CD0E2D',
+  G: '#20C25D',
+  B: '#203EC2',
+  Y: '#EEB949',
 };
 
 const defaultArt = [
@@ -26,7 +26,7 @@ const defaultArt = [
   '. . . . . . . . . . . . . . . .',
   '. . . . . . . . . . . . . . . .',
   '. . . . . . . . . . . . . . . .',
-  '. . . . . . . . . . . . . . . .'
+  '. . . . . . . . . . . . . . . .',
 ];
 
 const Grid = styled.div`
@@ -59,9 +59,10 @@ const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
     const newPixels = [...pixels];
     const pixelRow = newPixels[row];
 
-    const color = isErasing ? '.' : selectedColor
+    const color = isErasing ? '.' : selectedColor;
 
-    const newRow = pixelRow.slice(0, col) + color + pixelRow.slice(col + 1);
+    const newRow =
+      pixelRow.slice(0, col) + color + pixelRow.slice(col + 1);
     newPixels[row] = newRow;
 
     const newArt = {
@@ -74,17 +75,22 @@ const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
 
   const handlePixelDrag = (row, col) => {
     if (!isDrawing) return;
-  
-    const pixelIndex = row * (width + 1) + col;
+
+    const pixelIndex = row * width + col;
     const newPixels = [...pixels];
-  
+
     if (isErasing) {
       newPixels[pixelIndex] = '.';
     } else {
       newPixels[pixelIndex] = selectedColor;
     }
-  
+
     setArt({ ...art, pixels: newPixels });
+  };
+
+  const saveArt = () => {
+    // Define your saveArt function logic here
+    console.log('Art saved:', art);
   };
 
   return (
@@ -97,7 +103,7 @@ const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
               backgroundColor: colors[key],
               padding: '5px',
               margin: '5px',
-              border: selectedColor === key ? '2px solid #000' : 'none'
+              border: selectedColor === key ? '2px solid #000' : 'none',
             }}
             onClick={() => setSelectedColor(key)}
           >
@@ -113,13 +119,13 @@ const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
               ...art,
               pixels: Array(height)
                 .fill('.')
-                .join('')
+                .join(''),
             })
           }
         >
           Reset
         </button>
-        <button onClick={() => saveArt()}>Save</button>
+        <button onClick={saveArt}>Save</button>
       </div>
       <Grid
         width={width}
