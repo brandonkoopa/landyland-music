@@ -41,6 +41,8 @@ const Grid = styled.div`
   grid-template-rows: repeat(${(props) => props.height}, 1fr);
   grid-gap: 0;
   background-color: #f0f0f0;
+  height: ${(props) => props.height};
+  width: ${(props) => props.width};
 `;
 
 const Pixel = styled.div`
