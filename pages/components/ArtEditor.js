@@ -44,7 +44,7 @@ const Pixel = styled.div`
 `;
 
 const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
-  const pixels = Array.isArray(art.pixels) ? art.pixels : defaultArt;
+  const pixels = Array.isArray(art?.pixels) ? art?.pixels : defaultArt;
 
   const [selectedColor, setSelectedColor] = useState('0');
   const [isDrawing, setIsDrawing] = useState(false);
