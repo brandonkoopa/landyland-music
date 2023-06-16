@@ -13,6 +13,9 @@ const StyledSelect = styled(Select)`
   border-radius: 4px;
   width: 112px;
   
+  &:hover {
+    border-color: ${props => props?.theme?.color?.hover || '#fff'};
+  }
 
   &.ant-select-open {
     .ant-select-selection-item {

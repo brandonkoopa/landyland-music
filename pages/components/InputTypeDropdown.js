@@ -38,6 +38,7 @@ const DropdownItem = styled.li`
 
   &:hover {
     background-color: #f2f2f2;
+    border-color: ${props => props?.theme?.color?.hover || '#fff'};
   }
 `;
 

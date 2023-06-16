@@ -11,6 +11,7 @@ const StyledPlayButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 
   border: 1px solid;
   border-radius: 20px;
@@ -18,6 +19,10 @@ const StyledPlayButton = styled.button`
   width: 40px;
   height: 40px;
   background-color: #000;
+
+  &:hover {
+    border-color: ${props => props?.theme?.color?.select || '#fff'};
+  }
 
   &::before {
     content: "";

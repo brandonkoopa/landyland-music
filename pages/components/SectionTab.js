@@ -2,17 +2,21 @@ import React from 'react';
 import styled from 'styled-components';
 
 const SectionContainer = styled.span`
-  border: 1px solid #fff;
-  border-radius: 4px;
+  background-color: #000; 
+  border: 1px solid rgba(0,0,0,0);
   position: relative;
   display: inline-block;
   width: 64px;
   height: 32px;
   overflow: hidden;
+  cursor: pointer;
 
   &.selected {
-    background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid #FEF400;
+  }
+
+  &:hover {
+    border-color: ${props => props?.theme?.color?.hover || '#fff'};
   }
 `;
 

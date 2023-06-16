@@ -81,14 +81,9 @@ const SectionHolder = styled.div`
 const SectionTabs = styled.div`
   margin: 8px 0;
   text-align: center;
-  
-  span {
-    margin-right: 8px;
-  }
 `
 const NewSectionTab = styled.span`
-  border: 1px solid #fff;
-  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0);
   position: relative;
   display: inline-block;
   line-height: 28px;
@@ -96,6 +91,11 @@ const NewSectionTab = styled.span`
   overflow: hidden;
   text-align: center;
   width: 64px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: ${props => props?.theme?.color?.hover || '#fff'};
+  }
 `
 const TabBar = styled.div`
   display: inline-flex;
@@ -124,6 +124,7 @@ const Tab = styled.div`
   padding: 23px 0 32px;
   font-size: 16px;
   font-weight: 600;
+  user-select: none;
 
   &:not(:last-of-type) {
     border-right: 1px solid #000;
@@ -175,6 +176,9 @@ const BoomboxHandleRow = styled.div`
   right: 0;
   left: 0;
 `
+const HandleHolder = styled.div`
+  cursor: pointer;
+`
 const SongEditToolsRow = styled.div`
   display: grid;
   column-gap: 16px;
@@ -199,7 +203,7 @@ const SongEditingHeader = styled.div`
   display: grid;
   grid-template-columns: 40px 40px 1fr 40px;
   column-gap: 16px;
-  background-color: #464646;
+  background-color: ${props => props?.theme?.boombox?.color || '#2D2D2D'};
   transition: all 0.5s;
   margin: 8px;
 
@@ -227,6 +231,10 @@ const SongCaretButton = styled(Button)`
   &:focus {
     outline: 0;
     border: none;
+  }
+
+  &:hover {
+    border-color: ${props => props?.theme?.color?.select || '#fff'};
   }
 
   :not(:disabled):active {
@@ -276,6 +284,10 @@ const TrackTab = styled.li`
 
   &.selected {
    background-color: transparent;
+  }
+
+  &:hover {
+    border-color: ${props => props?.theme?.color?.hover || '#fff'};
   }
 `
 
@@ -1372,12 +1384,13 @@ const Index = () => {
         </LibraryView>
         }
         <SongContainer className={!isEditingSong ? 'collapsed' : ''}>
-          <BoomboxHandleRow><div></div><BoomboxHandle/><div></div></BoomboxHandleRow>
+          <BoomboxHandleRow><div></div><HandleHolder onClick={() => {setIsEditingSong(!isEditingSong)}}><BoomboxHandle/></HandleHolder><div></div></BoomboxHandleRow>
           <SongEditingHeader className={isEditingSong ? 'editing' : ''}>
             <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
               { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
             </SongCaretButton>
             <Art song={song} art={song.art} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
+            <div>
             { isEditingTitle && isEditingSong ? (
               <EditableTitle
                 type="text"
@@ -1389,8 +1402,10 @@ const Index = () => {
               />
             ) : (
 EditFilled,
-              <SongTitle onClick={() => { if(!isEditingSong){setIsEditingSong(!isEditingSong);return;} setIsEditingTitle(true) }}>Title: {song?.title} {isEditingSong && <EditFilled/>}</SongTitle>
-            )}
+                <SongTitle onClick={() => { if(!isEditingSong){setIsEditingSong(!isEditingSong);return;} setIsEditingTitle(true) }}>Title: {song?.title} {isEditingSong && <EditFilled/>}</SongTitle>
+              )}
+              <div>{time}</div>
+            </div>
             {isPlaying ? (
               <PauseButton id="stop" onClick={() => {togglePlaySong(song)}}/>
             ) : (
@@ -1472,7 +1487,6 @@ EditFilled,
                 </SectionTabs>
                 { song.tracks[selectedTrackIndex]?.sections &&
                   <SectionHolder>
-                    {time}
                     <SectionEditor
                       time={time}
                       section={song?.tracks[selectedTrackIndex]?.sections[selectedSectionIndex]}
