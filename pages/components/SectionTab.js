@@ -16,7 +16,7 @@ const SectionContainer = styled.span`
   }
 
   &:hover {
-    border-color: ${props => props?.theme?.color?.hover || '#fff'};
+    border-color: ${props => (props.theme && props.theme.color && props.theme.color.hover) || '#fff'};
   }
 `;
 

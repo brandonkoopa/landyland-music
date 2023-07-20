@@ -85,7 +85,10 @@ const ArtEditor = ({ art, setArt, width = 32, height = 32 }) => {
       newPixels[pixelIndex] = selectedColor;
     }
 
-    setArt({ ...art, pixels: newPixels });
+    setArt((prevArt) => ({
+      ...prevArt,
+      pixels: newPixels,
+    }));
   };
 
   const saveArt = () => {

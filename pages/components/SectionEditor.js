@@ -108,7 +108,8 @@ const SectionEditor = ({ section, time, selectedNoteIndex, setSelectedNoteIndex 
         }
 
         return (
-          <NoteSquare draggable
+          <NoteSquare
+            draggable={true} // or draggable={false}
             key={index}
             size={size}
             left={left}

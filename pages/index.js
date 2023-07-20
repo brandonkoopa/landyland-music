@@ -11,6 +11,7 @@ import PianoKeys from './ui_instruments/PianoKeys'
 import exampleSong from './json/example-song.json'
 import SectionEditor from './components/SectionEditor'
 import BoomboxHandle from './components/BoomboxHandle'
+import Skyline from './components/Skyline'
 import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
 import Gamepad from './components/Gamepad'
@@ -47,7 +48,7 @@ import { Amplify } from 'aws-amplify';
 // Amplify.configure(awsExports);
 
 const Main = styled.main`
-  background-color: ${props => props.theme.color.appBackgroundColor};
+  background: ${props => props.theme.color.appBackgroundColor};
   color: #fff;
   display: block;
   /* font-family: "Press Start 2P"; */
@@ -125,6 +126,7 @@ const Tab = styled.div`
   font-size: 16px;
   font-weight: 600;
   user-select: none;
+  cursor: pointer;
 
   &:not(:last-of-type) {
     border-right: 1px solid #000;
@@ -157,8 +159,6 @@ const EditableTitle = styled.input`
 `;
 const SongContainer = styled.div`
   background-color: ${props => props.theme.color.songContainer};
-  border: 1px solid #000;
-  border-radius: 8px 8px 0 0;
   transform: translateY(34px);
   /* padding: 8px; */
   transition: all 0.5s;
@@ -283,7 +283,7 @@ const TrackTab = styled.li`
   cursor: pointer;
 
   &.selected {
-   background-color: transparent;
+    background-color: transparent;
   }
 
   &:hover {
@@ -292,10 +292,6 @@ const TrackTab = styled.li`
 `
 
 const TrackContent = styled.div`
-  /* border-top: 1px solid #ccc;
-  border-bottom: 1px solid #999;
-  border-left: 1px solid #999;
-  border-right: 1px solid #999; */
   padding: 8px 0 0;
 `
 
@@ -309,7 +305,7 @@ const SearchRow = styled.div`
 `
 
 const SearchResultsContainer = styled.div`
-  background-color: ${props => props.theme.color.appBackgroundColor};
+  background: ${props => props.theme.color.appBackgroundColor};
   color: #fff;
   position: absolute;
   top: 48px;
@@ -322,7 +318,7 @@ const SearchResultsContainer = styled.div`
 `
 
 const SearchResult = styled.li`
-  background-color: ${props => props.theme.color.appBackgroundColor};
+  background: ${props => props.theme.color.appBackgroundColor};
   color: #64A5FF;
   font-size: 16px;
   list-style-type: none; /* Remove bullets */
@@ -1326,6 +1322,7 @@ const Index = () => {
           {/* <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" /> */}
       </Head>
       <Main className="main" onKeyDown={handleKeyDown}>
+        <Skyline type="city" />
         {(isOnHomeTab && !isEditingSong) &&
         <HomeView>
           <PageTitle>Home</PageTitle>
@@ -1389,7 +1386,7 @@ const Index = () => {
             <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
               { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
             </SongCaretButton>
-            <Art song={song} art={song.art} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
+            <Art song={song} art={song.art} setArt={setArt} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
             <div>
             { isEditingTitle && isEditingSong ? (
               <EditableTitle
@@ -1488,7 +1485,7 @@ EditFilled,
                 { song.tracks[selectedTrackIndex]?.sections &&
                   <SectionHolder>
                     <SectionEditor
-                      time={time}
+                      // time={time}
                       section={song?.tracks[selectedTrackIndex]?.sections[selectedSectionIndex]}
                       selectedNoteIndex={selectedNoteIndex}
                       setSelectedNoteIndex={setSelectedNoteIndex}

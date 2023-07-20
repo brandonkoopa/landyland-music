@@ -21,7 +21,7 @@ const StyledPlayButton = styled.button`
   background-color: #000;
 
   &:hover {
-    border-color: ${props => props?.theme?.color?.select || '#fff'};
+    border-color: ${props => (props.theme && props.theme.color && props.theme.color.select) || '#fff'};
   }
 
   &::before {

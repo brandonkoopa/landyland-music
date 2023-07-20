@@ -2,7 +2,8 @@ const theme = {
   color: {
     primary: '#FF5733',
     secondary: '#6C757D',
-    appBackgroundColor: '#1A1822',
+    appBackgroundColor: 'linear-gradient(#1E1F25, #2B3048)',
+    
     songContainer: '#2D2D2D',
     controlIconColor: '#fff',
     select: '#FFFF00',

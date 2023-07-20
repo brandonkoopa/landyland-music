@@ -15,16 +15,11 @@ const GridWrap = styled.div`
 `;
 
 const Cell = styled.button`
-  /* box-shadow: inset 0.2em 0.2em 0.2em 0 rgba(255,255,255,0.5), inset -0.2em -0.2em 0.2em 0 rgba(0,0,0,0.5); */
   box-shadow: inset 2px 2px 2px 0 rgba(255,255,255,0.5), inset -2px -2px 2px 0 rgba(0,0,0,0.5);
   width: 64px;
   height: 64px;
-  /* text-transform: uppercase; */
-  /* border: 4px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
-  /* border: 2px solid ${({ selected }) => (selected ? '#FEF400' : '#000')}; */
   border-radius: 10px;
   font-weight: 800;
-  /* background-color: ${({ selected }) => (selected ? '#FEF400' : '#fff')}; */
   background-color: #fff;
   color: ${({ selected }) => (selected ? '#000' : '#000')};
   ${({ filled }) =>
@@ -35,7 +30,6 @@ const Cell = styled.button`
 
   &.selected {
     background-color: ${props => props.theme.element.programGrid.cellSelectedBackgroundColor};
-    /* border: 2px solid #ff0000; */
   }
 `;
 

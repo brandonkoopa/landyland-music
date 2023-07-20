@@ -14,7 +14,7 @@ const StyledSelect = styled(Select)`
   width: 112px;
   
   &:hover {
-    border-color: ${props => props?.theme?.color?.hover || '#fff'};
+    border-color: ${props => (props.theme && props.theme.color && props.theme.color.hover) || '#fff'};
   }
 
   &.ant-select-open {

@@ -30,7 +30,7 @@ const StyledPauseButton = styled.button`
     transform: translate(-50%, -50%);
     width: 4px;
     height: 14px;
-    background-color: ${props => props?.theme?.color?.controlIconColor || '#fff'};
+    border-color: ${props => (props.theme && props.theme.color && props.theme.color.controlIconColor) || '#fff'};
   }
 
   &:after {
