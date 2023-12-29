@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^4.6.1",
+    "amazon-cognito-identity-js": "^6.3.7",
     "antd": "^5.4.2",
     "aws-amplify": "^5.1.4",
+    "aws-sdk": "^2.1495.0",
     "cypress": "^10.0.3",
     "next": "^12.1.5",
     "react": "^18.0.0",

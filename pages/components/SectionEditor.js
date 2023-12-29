@@ -18,7 +18,7 @@ const NoteSquare = styled.div`
   position: absolute;
   width: ${props => props.size}px;
   height: ${props => props.size}px;
-  background-color: ${props => (props.isPlaying ? '#FF0000' : props.selected ? '#FEF400' : '#fff')};
+  background-color: ${props => (props.isPlaying ? '#FF0000' : props.selected ? '#b21030' : '#fff')};
   left: ${props => props.left}px;
   bottom: ${props => props.bottom}px;
   opacity: ${props => (props.isEmpty ? 0 : 1)};

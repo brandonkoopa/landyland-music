@@ -4,9 +4,10 @@ import styled from 'styled-components'
 const Wrapper = styled.div`
   bottom: 0;
   position: absolute;
+  width: 100%;
 `
 
-const city = <svg width="375" height="227" viewBox="0 0 375 227" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
+const city = <svg width="100%" height="227" viewBox="0 0 375 227" fill="none" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
 <g opacity="0.15">
   <rect x="-55" y="34" width="475" height="204" fill="#1A1822" />
   <rect width="384" height="34" transform="matrix(-1 0 0 1 383 0)" fill="url(#pattern0)" />
