@@ -20,5 +20,8 @@
     "styled-components": "^5.3.9",
     "tone": "^14.7.77",
     "webmidi": "^3.1.5"
+  },
+  "devDependencies": {
+    "@next/swc-darwin-x64": "^14.0.4"
   }
 }

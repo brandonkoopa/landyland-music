@@ -5,27 +5,71 @@ import { useRouter } from 'next/router';
 import { CognitoUser } from 'amazon-cognito-identity-js';
 import userPool from '../aws/cognitoConfig';
 import theme from '../styles/theme';
+// import Skyline from './components/art/Skyline';
 
 const PageContainer = styled.div`
-  background-color: ${props => props.theme.element.app.backgroundColor};
+  background: ${props => props.theme.element.app.backgroundColor};
   color: ${props => props.theme.element.app.color};
   height: 100vh;
   padding: 16px;
 `;
 
+const Skyline = styled.div`
+  background-image: url(/skyline.png);
+  width: 100%;
+  height: 200px;
+  position: fixed;
+  bottom: 0;
+  background-size: 125%;
+  background-repeat: no-repeat;
+  right: 0;
+  left: 0;
+`
+
+const Title = styled.h2`
+  text-align: center;
+`
+
+const Paragraph = styled.p`
+  text-align: center;
+`
+
 const StyledForm = styled(Form)`
+  color: ${props => props.theme.element.app.color};
   max-width: 300px;
-  margin: auto;
+  margin: 32px auto 0;
+
+  .ant-form-item {
+    color: ${props => props.theme.element.app.color};
+  }
 `;
+
+const LoginContainer = styled.div`
+  color: ${props => props.theme.element.app.color};
+  margin-top: 32px;
+`
 
 const FormButton = styled(Button)`
   width: 100%;
+`;
+
+const LinkButton = styled(Button)`
+  span {
+    color: ${props => props.theme.color.primary};
+  }
 `;
 
 const Message = styled.p`
   color: ${({ theme, success }) => success ? theme.color.primary : 'red'};
   text-align: center;
 `;
+
+// const StyledSkyline = styled(Skyline)`
+//   position: fixed;
+//   bottom: 50px;
+//   left: 100px;
+//   scale: 2;
+// `
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
@@ -77,6 +121,9 @@ const SignUp = () => {
   return (
     <ThemeProvider theme={theme}>
       <PageContainer>
+        <Skyline width="32" height="32" />
+        <Title>Register</Title>
+        <Paragraph>So we can save your creations online, first create your username & password.</Paragraph>
         {!isConfirming ? (
         <StyledForm
           name="signup"
@@ -105,13 +152,7 @@ const SignUp = () => {
 
           <Form.Item>
             <FormButton type="primary" htmlType="submit">
-              Sign Up
-            </FormButton>
-
-            <p>Alright have an account?</p>
-
-            <FormButton type="secondary" onClick={handleLoginClick}>
-              Login
+              Register
             </FormButton>
           </Form.Item>
           
@@ -140,6 +181,14 @@ const SignUp = () => {
             {message && <Message success={isSuccess}>{message}</Message>}
           </StyledForm>
         )}
+        <LoginContainer>
+          <p>Have account?</p>
+
+          <LinkButton type="secondary" onClick={handleLoginClick}>
+            Login
+          </LinkButton>
+        </LoginContainer>
+
       </PageContainer>
     </ThemeProvider>
   );

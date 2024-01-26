@@ -1,6 +1,6 @@
 const theme = {
   color: {
-    primary: '#FF5733',
+    primary: '#05C948',
     secondary: '#6C757D',
     appBackgroundColor: 'linear-gradient(#1E1F25, #2B3048)',
     songContainer: '#2D2D2D',
