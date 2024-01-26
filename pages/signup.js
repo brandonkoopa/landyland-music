@@ -19,7 +19,7 @@ const Skyline = styled.div`
   width: 100%;
   height: 200px;
   position: fixed;
-  bottom: 0;
+  bottom: -58px;
   background-size: 125%;
   background-repeat: no-repeat;
   right: 0;
