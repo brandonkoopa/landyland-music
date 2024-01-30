@@ -16,7 +16,8 @@ const Index = () => {
     // const user = null; // Replace this with your actual logic to determine if a user is logged in.
     
     if (user === null) {
-      router.push('/signup');
+      // ToDo: add logic to decide if you should go to signup/login or if you should go to main, and/or if you should load cnotent
+      // router.push('/signup');
     }
   }, [router]);
 

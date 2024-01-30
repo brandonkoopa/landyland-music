@@ -26,6 +26,7 @@ import RecordButton from './components/RecordButton'
 import SongTypeSelect from './components/SongTypeSelect'
 import TrackTypeSelect from './components/TrackTypeSelect'
 import Ambient from './components/Ambient'
+import SearchResult from './components/SearchResult'
 
 import {
   SaveFilled,
@@ -39,19 +40,10 @@ import {
 import { Button, Input, Layout, Menu } from 'antd'
 const { Search } = Input;
 
-import { Amplify } from 'aws-amplify';
-
-// import Authenticate from './Authenticate'
-// import { withAuthenticator } from '@aws-amplify/ui-react';
-// import '@aws-amplify/ui-react/styles.css';
-// import awsExports from './aws-exports';
-// Amplify.configure(awsExports);
-
 const Content = styled.main`
   background: ${props => props.theme.color.appBackgroundColor};
   color: #fff;
   display: block;
-  /* font-family: "Press Start 2P"; */
   height: 100vh;
   overflow: hidden;
   padding: 0;
@@ -313,17 +305,7 @@ const SearchResultsContainer = styled.div`
   right: 0;
   bottom: 0;
   text-align: center;
-  z-index: 100;
   padding: 32px;
-`
-
-const SearchResult = styled.li`
-  background: ${props => props.theme.color.appBackgroundColor};
-  color: #64A5FF;
-  font-size: 16px;
-  list-style-type: none; /* Remove bullets */
-  padding: 0; /* Remove padding */
-  margin: 0; /* Remove margins */
 `
 
 const Main = () => {
@@ -334,7 +316,7 @@ const Main = () => {
   const [isEditingSongArt, setIsEditingSongArt] = useState(true)
   const [enteredSearchText, setEnteredSearchText] = useState('');
   const [tones, setTones] = useState([]);
-  const [selectedTabIndex, setSelectedTabIndex] = useState(0)
+  const [selectedTabIndex, setSelectedTabIndex] = useState(1)
   const [selectedTrackIndex, setSelectedTrackIndex] = useState(0)
   const [selectedSectionIndex, setSelectedSectionIndex] = useState(0)
   const [selectedNoteIndex, setSelectedNoteIndex] = useState(0)
@@ -364,11 +346,12 @@ const Main = () => {
   const isOnSearchTab = selectedTabIndex === 1
   const isOnLibraryTab = selectedTabIndex === 2
 
-  const selectedWaveform = song.tracks[selectedTrackIndex].waveform
+  const selectedWaveform = song?.tracks?.[selectedTrackIndex]?.waveform || null;
 
   let playheadPosition = 0;
 
-  const apiBaseUrl = 'https://kgm4o3qweg.execute-api.us-east-2.amazonaws.com/dev'
+
+  const apiBaseUrl = 'https://ifi0sj8zv9.execute-api.us-east-2.amazonaws.com/dev'
 
   useEffect(() => {
     loadSongFromUrl()
@@ -560,6 +543,7 @@ const Main = () => {
   }
 
   const loadSongFromServerById = (songId) => {
+    console.log('songId : ', songId)
     if (songId) {
       fetch(`${apiBaseUrl}/song/${songId}`)
         .then(response => response.json())
@@ -1074,8 +1058,10 @@ const Main = () => {
       });
   }
 
-  const goToPageBySongId = songId => {
-    window.location.href = `/?song_id=${songId}`
+  const handleContentSelect = songId => {
+    console.log('handleContentSelect = songId : ', songId)
+    // window.location.href = `/?song_id=${songId}`
+    loadSongFromServerById(songId)
   }
 
   const handleSave = async () => {
@@ -1297,7 +1283,7 @@ const Main = () => {
           <SearchRow className={`${isShowingSearchResults ? " results-open" : ""}`}>
             <Search
               allowClear
-              placeholder="Search all music"
+              placeholder="Search art & music"
               loading={isSearching}
               onSearch={handleSearch}
               value={enteredSearchText}
@@ -1315,7 +1301,7 @@ const Main = () => {
             <ul>
             {searchResults.map((result, index) => (
               <SearchResult key={index}
-                onClick={() => { goToPageBySongId(result.id) }}
+                onClick={() => { handleContentSelect(result.id) }}
               >
                 {result.title}
               </SearchResult>
@@ -1423,7 +1409,7 @@ EditFilled,
                 ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
                 : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
                 } */}
-                <TrackTypeSelect value={song.tracks[selectedTrackIndex]?.type} song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
+                <TrackTypeSelect value={song.tracks?.[selectedTrackIndex]?.type} song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
                 <WaveformContainer>
                   <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
                   <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
@@ -1432,7 +1418,7 @@ EditFilled,
                   {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
                 </WaveformContainer>
                 <SectionTabs id="section-tabs-container">
-                  { song.tracks[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
+                  { song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
                   <SectionTab
                     key={sectionIndex}
                     notes={section?.notes}
@@ -1442,7 +1428,7 @@ EditFilled,
                   ))}
                   <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
                 </SectionTabs>
-                { song.tracks[selectedTrackIndex]?.sections &&
+                { song.tracks?.[selectedTrackIndex]?.sections &&
                   <SectionHolder>
                     <SectionEditor
                       // time={time}
@@ -1463,7 +1449,7 @@ EditFilled,
 
                 {/* <InputTypeDropdown isOpen setIsOpen currentInputType handleInputTypeItemClick /> */}
 
-                <Gamepad instrumentType={song.tracks[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
+                <Gamepad instrumentType={song.tracks?.[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
                 
                 { song.art &&
                   <ArtEditorContainer>
