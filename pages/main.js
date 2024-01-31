@@ -73,7 +73,6 @@ const SectionHolder = styled.div`
 `
 const SectionTabs = styled.div`
   margin: 8px 0;
-  text-align: center;
 `
 const NewSectionTab = styled.span`
   border: 1px solid rgba(0,0,0,0);
@@ -185,6 +184,7 @@ const SongDetail = styled.span`
   padding: 8px;
   border: 1px solid #999;
   border-radius: 8px;
+  user-select: none;
 
   background-color: #ebebeb;
   vertical-align: middle;
@@ -240,36 +240,47 @@ const CreateSongButton = styled(Button)`
 const CancelButton = styled(Button)`
   color: #fff;
 `
+const WaveformContainer = styled.div`
+  text-align: center;
+`
 const BPMSliderWrapper = styled.div`
   position: absolute;
   padding: 10px;
   background-color: #fff;
   box-shadow: 0px 3px 6px rgba(0,0,0,0.16);
-  transform: translate(46px,49px);
+  transform: translate(250px,-200px);
   z-index: 100;
 `
 const TempoSlider = styled.input`
   margin-right: 10px;
+
+    appearance: slider-vertical;
+    width: 8px;
+    height: 175px;
+    padding: 0 5px;
+`
+const TracksAndSections = styled.div`
+  display: grid;
+  grid-template-columns: 150px 1fr;
+`
+const SectionsContainer = styled.div`
+
 `
 const TracksContainer = styled.ul`
   margin: 8px 0 0;
   padding: 0;
-`
-const WaveformContainer = styled.div`
-  text-align: center;
-`
+  list-style-type: none; // This removes the default list styling
+`;
+
 const TrackTab = styled.li`
   text-transform: capitalize;
-  display: inline-block;
+  display: block;
   list-style-type: none;
-  padding: 0;
-  margin: 0;
   border-top: 1px solid #999;
   border-left: 1px solid #999;
   border-right: 1px solid #999;
   margin: 0;
   padding: 8px;
-  background-color: transparent;
   background-color: #666;
   user-select: none;
   cursor: pointer;
@@ -338,6 +349,8 @@ const Main = () => {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingBpm, setIsEditingBpm] = useState(false)
   const [isEditingKey, setIsEditingKey] = useState(false)
+  const [isShowingGamepad, setIsShowingGamepad] = useState(false)
+  const [isShowingArtEditor, setIsShowingArtEditor] = useState(false)
 
   const [isOpen, setIsOpen] = useState(false)
   const [currentInputType, setCurrentInputType] = useState('')
@@ -550,6 +563,7 @@ const Main = () => {
         .then(songData => {
           setSong(songData)
           setSongLatestFromServer({...songData})
+          setIsEditingSong(true)
         })
         .catch(error => console.log(error));
     }
@@ -1355,79 +1369,50 @@ EditFilled,
               <PlayButton id="play" onClick={() => {togglePlaySong(song)}}/>
             )}
           </SongEditingHeader>
+          <SongEditToolsRow>
+            <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
+            <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
+              <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
+            </SongDetail>
+            { isEditingKey &&
+              <KeyMenu handleOptionClick={handleOptionClick} />
+            }
+              { isEditingBpm &&
+              <BPMSliderWrapper>
+                <TempoSlider
+                  type="range"
+                  orient="vertical"
+                  min="60"
+                  max="240"
+                  value={bpm}
+                  onChange={handleTempoChange}
+                />
+              </BPMSliderWrapper>
+              }
+          </SongEditToolsRow>
+          <Col>
+            { isEditingSong &&
+            <SaveButton
+              type="primary"
+              onClick={handleSave}
+              loading={isSaving}
+              disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
+            >
+              <SaveFilled />
+            </SaveButton>
+            }
+          </Col>
           <div id="song-container-content">
             {/* <SongTypeSelect setSong={setSong} /> */}
             { song.type === 'generative' ?
             <Ambient />
             : <div>
-            <Col id="structured">
-              { isEditingSong &&
-              <SaveButton
-                type="primary"
-                onClick={handleSave}
-                loading={isSaving}
-                disabled={JSON.stringify(song) === JSON.stringify(songLatestFromServer)}
-              >
-                <SaveFilled />
-              </SaveButton>
-              }
-            </Col>
-            <SongEditToolsRow>
-              <SongDetail onClick={() => setIsEditingKey(!isEditingKey)}>Key: {song.keyLetter}</SongDetail>
-              <SongDetail onClick={() => setIsEditingBpm(!isEditingBpm)}>
-                <Image src="/icon-metronome.png" width="32" height="32" /> {song.bpm}
-              </SongDetail>
-              { isEditingKey &&
-                <KeyMenu handleOptionClick={handleOptionClick} />
-              }
-                { isEditingBpm &&
-                <BPMSliderWrapper>
-                  <TempoSlider
-                    type="range"
-                    min="60"
-                    max="240"
-                    value={bpm}
-                    onChange={handleTempoChange}
-                  />
-                </BPMSliderWrapper>
-                }
-            </SongEditToolsRow>
-            <TracksContainer id="tracks-container">
-              {song.tracks?.map((track, index) => (
-              <TrackTab id={`track-${index}`} key={index}
-                className={`${selectedTrackIndex === index ? ' selected' : ''}`}
-                onClick={() => {selectTrack(index)}}
-              >
-                {/* {track.title} */}
-                {track.type}
-              </TrackTab>
-              ))}
-              <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
-            </TracksContainer>
             <TrackContent>
                 {/* { isRecording
                 ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
                 : <RecordButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordButton>
                 } */}
-                <TrackTypeSelect value={song.tracks?.[selectedTrackIndex]?.type} song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
-                <WaveformContainer>
-                  <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
-                  <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
-                  <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
-                  <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
-                  {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
-                </WaveformContainer>
-                <SectionTabs id="section-tabs-container">
-                  { song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
-                  <SectionTab
-                    key={sectionIndex}
-                    notes={section?.notes}
-                    isSelected={sectionIndex === selectedSectionIndex}
-                    onClick={() => {selectSection(sectionIndex)}}
-                  />
-                  ))}
-                  <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
-                </SectionTabs>
+                
                 { song.tracks?.[selectedTrackIndex]?.sections &&
                   <SectionHolder>
                     <SectionEditor
@@ -1438,6 +1423,17 @@ EditFilled,
                     />
                   </SectionHolder>
                 }
+                {/* <SectionTabs id="section-tabs-container">
+                  { song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
+                  <SectionTab
+                    key={sectionIndex}
+                    notes={section?.notes}
+                    isSelected={sectionIndex === selectedSectionIndex}
+                    onClick={() => {selectSection(sectionIndex)}}
+                  />
+                  ))}
+                  <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
+                </SectionTabs> */}
                 {/* <ProgramGrid
                   song={song}
                   setSong={setSong}
@@ -1449,9 +1445,11 @@ EditFilled,
 
                 {/* <InputTypeDropdown isOpen setIsOpen currentInputType handleInputTypeItemClick /> */}
 
+                { isShowingGamepad &&
                 <Gamepad instrumentType={song.tracks?.[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
+                }
                 
-                { song.art &&
+                { (isShowingArtEditor && song.art) &&
                   <ArtEditorContainer>
                     <ArtEditor art={song.art} setArt={setArt} />
                   </ArtEditorContainer>
@@ -1465,9 +1463,44 @@ EditFilled,
                     <div className="playhead"></div>
                 </div> */}
             </TrackContent>
+            <TrackTypeSelect value={song.tracks?.[selectedTrackIndex]?.type} song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
+              <WaveformContainer>
+                <WaveformButton id="triangle" className={`btn-waveform triangle ${selectedWaveform === 'triangle' ? 'selected' : ''}`} onClick={() => setWaveform('triangle')}><Image src="/icon-waveform-triangle.png" width="16" height="16" /></WaveformButton>
+                <WaveformButton id="square" className={`btn-waveform square ${selectedWaveform === 'square' ? 'selected' : ''}`} onClick={() => setWaveform('square')}><Image src="/icon-waveform-square.png" width="16" height="8" /></WaveformButton>
+                <WaveformButton id="sawtooth" className={`btn-waveform sawtooth ${selectedWaveform === 'sawtooth' ? 'selected' : ''}`} onClick={() => setWaveform('sawtooth')}><Image src="/icon-waveform-sawtooth.png" width="16" height="8" /></WaveformButton>
+                <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
+                {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
+              </WaveformContainer>
           </div>
           }
           </div>
+          <TracksAndSections id="tracks-and-sections">
+              <TracksContainer id="tracks-container">
+                {song.tracks?.map((track, index) => (
+                <TrackTab id={`track-${index}`} key={index}
+                  className={`${selectedTrackIndex === index ? ' selected' : ''}`}
+                  onClick={() => {selectTrack(index)}}
+                >
+                  {/* {track.title} */}
+                  {track.type}
+                </TrackTab>
+                ))}
+                <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
+              </TracksContainer>
+              <SectionsContainer>
+                <SectionTabs id="section-tabs-container">
+                    { song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
+                    <SectionTab
+                      key={sectionIndex}
+                      notes={section?.notes}
+                      isSelected={sectionIndex === selectedSectionIndex}
+                      onClick={() => {selectSection(sectionIndex)}}
+                    />
+                    ))}
+                    <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
+                </SectionTabs>
+              </SectionsContainer>
+            </TracksAndSections>
         </SongContainer>
         <TabBar id="app-tabs" className={isEditingSong ? 'hidden' : ''}>
           <Tab className={selectedTabIndex === 0 ? 'selected' : ''} onClick={() => {setSelectedTabIndex(0)}}><div><HomeFilled /></div>Home</Tab>

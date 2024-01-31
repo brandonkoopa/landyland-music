@@ -12,6 +12,9 @@ const StyledSaveButton = styled(Button)`
   border: 0;
   box-shadow: none !important;
   transform: translateY(-6px);
+  
+  float: right;
+  margin-right: 24px;
 
   :disabled {
     opacity: 0.25;

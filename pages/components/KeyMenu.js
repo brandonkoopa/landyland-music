@@ -10,6 +10,7 @@ const Container = styled.div`
   border-radius: 50%;
   position: absolute;
   z-index: 100;
+  transform: translate(22px, -142px);
 `;
 
 const Button = styled.button`
