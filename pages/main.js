@@ -1279,6 +1279,9 @@ const Main = () => {
       <Head>
           <title>Landy Land - {song.title || 'Content'}</title>
           <meta name="description" content="pixel-perfect platform for content creators" />
+          <link rel="icon" href="/favicon.ico" sizes="16x16" />
+          <link rel="icon" href="/favicon-32x32.png" sizes="32x32" />
+          <link rel="icon" href="/favicon-48x48.png" sizes="48x48" />
           {/* Open Graph / Facebook meta tags */}
           {/* <meta property="og:type" content="music.song" /> */}
           <meta property="og:type" content="website" />
