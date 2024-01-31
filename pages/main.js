@@ -1277,7 +1277,20 @@ const Main = () => {
   return (
     <ThemeProvider theme={theme}>
       <Head>
-          <title>Landy Land - Music</title>
+          <title>Landy Land - {song.title || 'Content'}</title>
+          <meta name="description" content="pixel-perfect platform for content creators" />
+          {/* Open Graph / Facebook meta tags */}
+          {/* <meta property="og:type" content="music.song" /> */}
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content={song.title} />
+          <meta property="og:description" content="Made in Landy Land" />
+          {/* <meta property="og:image" content={songImage} /> */}
+
+          {/* Twitter meta tags */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={song.title} />
+          <meta name="twitter:description" content="Made in Landy Land" />
+          <meta name="twitter:image" content={'/landy-land-og-share.png'} />
           {/* <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" /> */}
           {/* <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" /> */}
       </Head>
