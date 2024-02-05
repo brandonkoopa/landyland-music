@@ -40,7 +40,7 @@ const Grid = styled.div`
   grid-template-columns: repeat(${(props) => props.width}, 1fr);
   grid-template-rows: repeat(${(props) => props.height}, 1fr);
   grid-gap: 0;
-  background-color: #f0f0f0;
+  background-color: #000;
   height: ${(props) => props.height};
   width: ${(props) => props.width};
 `;
@@ -51,7 +51,7 @@ const Pixel = styled.div`
   padding-bottom: 100%;
 `;
 
-const Art = ({ art, editable=false, setArt, width = 32, height = 32 }) => {
+const Art = ({ art, editable=false, setArt, width = 32, height = 32, onClick }) => {
   const pixels = Array.isArray(art?.pixels) ? art.pixels : defaultArt;
 
   const [selectedColor, setSelectedColor] = useState('0');
@@ -99,7 +99,7 @@ const Art = ({ art, editable=false, setArt, width = 32, height = 32 }) => {
   };
 
   return (
-    <ArtHolder width={width} height={height} >
+    <ArtHolder width={width} height={height} onClick={onClick} >
       { editable &&
       <div>
         {Object.keys(colors).map((key) => (

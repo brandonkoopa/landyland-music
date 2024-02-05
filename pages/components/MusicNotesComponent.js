@@ -6,7 +6,6 @@ const NoteSize = 16; // The size of each note
 const GridSize = 16; // The number of notes in one row/column
 const GridBorder = '1px solid #ccc'; // Gray border for the grid lines
 
-// Styled-component for the note
 const Note = styled.div`
   width: ${NoteSize}px;
   height: ${NoteSize}px;

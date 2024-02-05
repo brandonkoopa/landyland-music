@@ -333,7 +333,6 @@ const Main = () => {
   const [song, setSong] = useState(newSong)
   const [time, setTime] = useState(0)
   const [allPossibleTrackTypes, setAllPossibleTrackTypes] = useState(['drums', 'keys', 'strings'])
-  const [isEditingSongArt, setIsEditingSongArt] = useState(true)
   const [enteredSearchText, setEnteredSearchText] = useState('');
   const [tones, setTones] = useState([]);
   const [selectedTabIndex, setSelectedTabIndex] = useState(1)
@@ -1018,7 +1017,12 @@ const Main = () => {
             <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
               { !isEditingSong ? <UpOutlined /> : <DownOutlined /> }
             </SongCaretButton>
-            <Art song={song} art={song.art} setArt={setArt} onClick={() => {if(!isEditingSong){setIsEditingSong(!isEditingSong);return;}setIsEditingSongArt(!isEditingSongArt)}} />
+            <Art
+              song={song}
+              art={song.art}
+              setArt={setArt}
+              onClick={() => { setIsShowingArtEditor(!isShowingArtEditor) }}
+            />
             <div>
             { isEditingTitle && isEditingSong ? (
               <EditableTitle

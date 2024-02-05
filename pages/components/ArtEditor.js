@@ -34,7 +34,7 @@ const Grid = styled.div`
   grid-template-columns: repeat(${(props) => props.width}, 1fr);
   grid-template-rows: repeat(${(props) => props.height}, 1fr);
   grid-gap: 0;
-  background-color: #f0f0f0;
+  background-color: #000;
 `;
 
 const Pixel = styled.div`
