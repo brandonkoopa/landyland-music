@@ -15,6 +15,7 @@ const Note = styled.div`
   border-left: ${GridBorder};
   border-top: ${GridBorder};
   box-sizing: border-box;
+  touch-action: none;
 
   &:nth-child(${GridSize}n) {
     border-right: ${GridBorder};
