@@ -6,14 +6,11 @@ import theme from '../styles/theme'
 import * as Tone from 'tone';
 import Image from 'next/image'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
 import PianoKeys from './ui_instruments/PianoKeys'
 import newSong from './json/new-song.json'
-import SectionEditor from './components/SectionEditor'
 import MusicNotesComponent from './components/MusicNotesComponent'
 import BoomboxHandle from './components/BoomboxHandle'
 import Skyline from './components/Skyline'
-import ProgramGrid from './ProgramGrid'
 import KeyMenu from './components/KeyMenu'
 import Gamepad from './components/Gamepad'
 import SectionTab from './components/SectionTab'
@@ -24,11 +21,17 @@ import PlayButton from './components/PlayButton'
 import SaveButton from './components/SaveButton'
 import PauseButton from './components/PauseButton'
 import RecordButton from './components/RecordButton'
-import SongTypeSelect from './components/SongTypeSelect'
 import TrackTypeSelect from './components/TrackTypeSelect'
-import Ambient from './components/Ambient'
 import SearchResult from './components/SearchResult'
-import { getFrequencyByLetter, getNoteNameByFrequency, getHalfStepsFromRoot } from '../lib/noteHelpers';
+import {
+  getFrequencyByLetter,
+  getNoteNameByFrequency,
+  getHalfStepsFromRoot,
+  getNoteName,
+  getFrequency,
+  getNoteNameByStep,
+  keyMap,
+} from '../lib/noteHelpers';
 
 import {
   SaveFilled,
@@ -267,8 +270,8 @@ const TempoSlider = styled.input`
 const TracksAndSections = styled.div`
   display: grid;
   grid-template-columns: 150px 1fr;
-  margin-top: 8px
-`
+  margin-top: 8px;
+  `
 const SectionsContainer = styled.div`
 
 `
@@ -327,7 +330,6 @@ const SearchResultsContainer = styled.div`
 `
 
 const Main = () => {
-  const router = useRouter()
   const [song, setSong] = useState(newSong)
   const [time, setTime] = useState(0)
   const [allPossibleTrackTypes, setAllPossibleTrackTypes] = useState(['drums', 'keys', 'strings'])
@@ -341,7 +343,6 @@ const Main = () => {
   const [isEditingSong, setIsEditingSong] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [isLooping, setIsLooping] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [isRecording, setIsRecording] = useState(false)
   const [recordedNotes, setRecordedNotes] = useState([])
@@ -349,7 +350,6 @@ const Main = () => {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [isEnteringSearch, setIsEnteringSearch] = useState(false)
-  const [playButtonIcon, setPlayButtonIcon] = useState('▶')
   const [synth, setSynth] = useState(null)
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false)
 
@@ -359,17 +359,11 @@ const Main = () => {
   const [isShowingGamepad, setIsShowingGamepad] = useState(false)
   const [isShowingArtEditor, setIsShowingArtEditor] = useState(false)
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [currentInputType, setCurrentInputType] = useState('')
-
   const isOnHomeTab = selectedTabIndex === 0
   const isOnSearchTab = selectedTabIndex === 1
   const isOnLibraryTab = selectedTabIndex === 2
 
   const selectedWaveform = song?.tracks?.[selectedTrackIndex]?.waveform || null;
-
-  let playheadPosition = 0;
-
 
   const apiBaseUrl = 'https://ifi0sj8zv9.execute-api.us-east-2.amazonaws.com/dev'
 
@@ -393,17 +387,6 @@ const Main = () => {
     } else {
       console.log('WebMIDI is not supported in this browser.')
     }
-
-    // Create an interval timer
-    // const interval = setInterval(() => {
-    //   setTime(Tone.Transport.seconds)
-    //   // setTime(Tone.now())
-    // }, 100); // Interval of 1 second (1000 milliseconds)
-
-    // // Clean up the interval on component unmount
-    // return () => {
-    //   clearInterval(interval);
-    // };
   }, []);
 
   useEffect(() => {
@@ -424,8 +407,6 @@ const Main = () => {
   }, [selectedNoteIndex]); // This will log every time selectedNoteIndex changes
 
   const updateSelectedNoteIndex = (index) => {
-    console.log('trying to set selectedSectionIndex to ', index)
-    // setSelectedSectionIndex(index)
     setSelectedNoteIndex(index)
   }
 
@@ -484,11 +465,6 @@ const Main = () => {
     setSong({ ...song, art: art })
   }
 
-  const handleInputTypeItemClick = (inputType) => {
-    setCurrentInputType(inputType);
-    setIsOpen(false);
-  }
-
   const onMIDISuccess = (midiAccess) => {
     console.log('onMIDISuccess')
     for (let input of midiAccess.inputs.values()) {
@@ -512,42 +488,23 @@ const Main = () => {
     }
   };
 
-  const getNoteName = (note) => {
-    const noteNames = [
-      "C",
-      "C#",
-      "D",
-      "D#",
-      "E",
-      "F",
-      "F#",
-      "G",
-      "G#",
-      "A",
-      "A#",
-      "B",
-    ];
-    const octave = Math.floor(note / 12) - 1;
-    const noteName = note % 12;
-    return noteNames[noteName] + octave;
-  };
-
-  const getFrequency = (note) => {
-    return 440 * Math.pow(2, (note - 69) / 12);
-  };
-
   const playMidiNote = (note) => {
     console.log("Played MIDI note:", note)
     // playNote(note.frequency)
 
-    console.log('try to writeNoteAtIndex')
+    const rootNote = song.keyLetter.toUpperCase() + (note.octave || '');
+    const rootFrequency = getFrequencyByLetter(rootNote);
 
-    writeNoteAtIndex({index: selectedNoteIndex, note: {
-      time: null,
+    playNote(note.frequency);
+
+    const updatedNote = {
+      index: selectedNoteIndex,
+      noteName: note.noteName,
       frequency: note.frequency,
-      noteName: note.noteName
-    }})
-    // Call your function to play the note here, passing the note object as an argument
+      halfStepFromRoot: getHalfStepsFromRoot(note.frequency, rootFrequency),
+    };
+      
+    writeNoteAtIndex({ index: selectedNoteIndex, note: updatedNote });
   };
 
   const clearAllTones = () => {
@@ -604,68 +561,7 @@ const Main = () => {
     }))
 
     return emptyNotes
-    
-    // // Loop through each track
-    // newSong.tracks = newSong.tracks.map(track => {
-    //   // Create a new notes array with the correct length
-    //   let newNotes = [];
-  
-    //   // Copy over existing notes
-    //   track.notes.forEach(note => {
-    //     if (note.halfStepFromRoot !== null && note.time !== null) {
-    //       const index = note.halfStepFromRoot + (note.time / 100) * (numberOfNotesPerSection / 4);
-    //       if (index >= 0 && index < numberOfNotesPerSection) {
-    //         newNotes[index] = note;
-    //       }
-    //     }
-    //   });
-  
-    //   // Check if track length is less than numberOfNotesPerSection
-    //   if (newNotes.length < numberOfNotesPerSection) {
-    //     // Fill remaining notes with empty notes
-    //     const emptyNote = {
-    //       halfStepFromRoot: null,
-    //       time: null,
-    //       noteName: null,
-    //       frequency: null
-    //     };
-    //     for (let i = newNotes.length; i < numberOfNotesPerSection; i++) {
-    //       newNotes[i] = emptyNote;
-    //     }
-    //   }
-  
-    //   // Update track notes
-    //   return {
-    //     ...track,
-    //     notes: newNotes
-    //   };
-    // });
-  
-    // return newSong;
   }  
-  
-  var keyMap = {
-      'a': 261.63, // c
-      'w': 277.18, // c-sharp
-      's': 293.66, // d
-      'e': 311.13, // d-sharp
-      'd': 329.63, // e
-      'f': 349.23, // f
-      't': 369.99, // f-sharp
-      'g': 392.00, // g
-      'y': 415.30, // g-sharp
-      'h': 440.00, // a
-      'u': 466.16, // a-sharp
-      'j': 493.88, // b
-      'k': 523.25, // high-c
-      'o': 554.37, // high-c-sharp
-      'l': 587.33, // high-d
-      'p': 622.25, // high-d-sharp
-      ';': 659.25, // high-e
-      '\'': 523.25, // high-c
-      '[': 554.37, // high-c-sharp
-      ']': 493.88 // b
-      };
 
   // function to play note
   const playNote = frequency => {
@@ -690,14 +586,13 @@ const Main = () => {
 
     const currentTime = newSynth.context.currentTime
 
-      // record note if recording is enabled
-      // if (isRecording) {
-      //     writeNoteToSong({
-      //       time: currentTime,
-      //       frequency: frequency,
-      //       noteName: getNoteNameByFrequency(frequency) 
-      //     })
-      // }
+    // record note if recording is enabled
+    // if (isRecording) {
+    //     writeNoteAtIndex({index: selectedNoteIndex, note: {
+    //    time: currentTime,
+    //    frequency: frequency,
+    //    noteName: getNoteNameByFrequency(frequency) 
+    //  }})
 
 
     if (selectedNoteIndex) {
@@ -708,33 +603,6 @@ const Main = () => {
       }})
     }
   }
-
-  // Define moveNote here
-  const moveNote = (originalIndex, newIndex) => {
-  setSong((prevSongData) => {
-    const updatedTracks = JSON.parse(JSON.stringify(prevSongData.tracks));
-    const sectionNotes = updatedTracks[0].sections[0].notes;
-
-    // Check if the note at the original index exists
-    if (sectionNotes[originalIndex]) {
-      // Extract the note to move
-      const noteToMove = { ...sectionNotes[originalIndex] };
-
-      // Update the note's index
-      noteToMove.index = newIndex;
-
-      // Set the moved note at the new index
-      sectionNotes[newIndex] = noteToMove;
-
-      // Remove the original note by setting it to null
-      sectionNotes[originalIndex] = null;
-    } else {
-      console.error('No note found at the original index:', originalIndex);
-    }
-
-    return { ...prevSongData, tracks: updatedTracks };
-  });
-};
 
   const writeNoteAtIndex = ({ index, note }) => {
     // If note is null, clear the note at the given index
@@ -773,59 +641,6 @@ const Main = () => {
     setSong({ ...song, tracks: updatedTracks });
   };
 
-  const writeNoteToSong = note => {
-    const updatedTracks = [ ...song?.tracks, note ]
-    // updatedTracks.push(note)
-    setSong({ ...song, tracks: updatedTracks })
-  }
-
-  // function to start metronome
-  function startMetronome() {
-      var interval = 60 / tempo;
-      var startTime = currentTime;
-      var nextBeatTime = startTime + interval;
-
-      // create gain node for metronome sound
-      var metronomeGain = synth.context.createGain();
-      metronomeGain.gain.setValueAtTime(0, currentTime);
-      metronomeGain.connect(synth.context.destination);
-
-      function scheduleBeat() {
-          if (!isRecording) {
-              return;
-          }
-
-          metronomeGain.gain.setValueAtTime(1, nextBeatTime - 0.05);
-          metronomeGain.gain.setValueAtTime(0, nextBeatTime);
-
-          nextBeatTime += interval;
-
-          setTimeout(scheduleBeat, (nextBeatTime - currentTime - 0.05) * 1000);
-      }
-
-      scheduleBeat();
-  }
-
-  // function to stop metronome
-  function stopMetronome() {
-      var metronomeGain = synth.context.createGain();
-      metronomeGain.gain.setValueAtTime(0, currentTime);
-  }
-
-  // function to play recorded notes
-  function playRecordedNotes() {
-      var startTime = currentTime;
-
-      recordedNotes.forEach(function(note) {
-          var time = note.time - recordedNotes[0].time + startTime;
-          var frequency = note.frequency;
-
-          setTimeout(function() {
-              playNote(frequency);
-          }, (time - currentTime) * 1000);
-      });
-  }
-
   const togglePlaySong = songToPlay => {
     // Stop any currently playing audio
     // Tone.Transport.stop()
@@ -843,13 +658,7 @@ const Main = () => {
     setIsRecording(false);
     setIsPlaying(true);
 
-    if (song.type === 'structured') {
-      playStructuredSong(songToPlay)
-    } if (song.type === 'generative') {
-      playGenerativeSong(songToPlay)
-    } else {
-      playStructuredSong(songToPlay)
-    }
+    playStructuredSong(songToPlay)
 
     Tone.Transport.position = currentTime;
   }
@@ -942,116 +751,10 @@ const Main = () => {
           // start the sequence
           drumSequence.start(0);
         }
-
-        // const sectionEndTime = section.endTime || section.startTime + notes.length * interval;
-        // const sectionDuration = sectionEndTime - section.startTime;
-  
-        // // Update currentTime and schedule the next section
-        // Tone.Transport.scheduleOnce((time) => {
-        //   currentTime = sectionEndTime;
-        //   setTime(currentTime);
-        // }, `+${sectionDuration}`);
-  
-        // // Start the transport if it's not already started
-        // if (!Tone.Transport.state === 'started') {
-        //   Tone.Transport.start();
-        // }
       })
     })
 
     setTones(newTones)
-  }  
-
-  function playGenerativeSong(songToPlay) {
-    let newTones = [];
-  
-    Tone.start();
-  
-    Tone.Transport.scheduleOnce(() => {
-      songToPlay.tracks?.forEach((track) => {
-        track.sections?.forEach((section) => {
-          const notes = section?.notes;
-  
-          if (track.type === 'synth') {
-            const synth = initializeSynth();
-            newTones.push(synth);
-  
-            const loop = initializeLoop(synth);
-            newTones.push(loop);
-          } else if (track.type === 'drums') {
-            const kick = new Tone.MembraneSynth({
-              pitchDecay: 0.05,
-              octaves: 5,
-              oscillator: { type: 'sine' },
-              envelope: { sustain: 0, release: 0.5 },
-            }).toDestination();
-            newTones.push(kick);
-  
-            const snare = new Tone.NoiseSynth({
-              noise: { type: 'white' },
-              envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
-            }).toDestination();
-            newTones.push(snare);
-  
-            const hiHat = new Tone.NoiseSynth({
-              noise: { type: 'pink' },
-              envelope: { attack: 0.001, decay: 0.1, sustain: 0 },
-            }).toDestination();
-            newTones.push(hiHat);
-  
-            const drumLoop = new Tone.Loop((time) => {
-              const randomNote = getRandomDrumNote();
-              const noteName = randomNote.noteName;
-              if (noteName === 'kick') {
-                kick.triggerAttackRelease('C1', '8n', time);
-              } else if (noteName === 'snare') {
-                snare.triggerAttackRelease(randomNote, time);
-              } else if (noteName === 'hihat') {
-                hiHat.triggerAttackRelease(randomNote, time);
-              }
-            }, '8n');
-            newTones.push(drumLoop);
-          }
-        });
-      });
-  
-      setTones([...tones, ...newTones]);
-    });
-  
-    Tone.Transport.start();
-  }
-  
-  const initializeSynth = () => {
-    const synth = new Tone.PolySynth().toDestination();
-    const pan = Math.random() * 2 - 1;
-    const reverb = new Tone.Reverb({
-      decay: Math.random() * 10 + 2,
-      wet: Math.random() * 0.5 + 0.1,
-    }).toDestination();
-    synth.connect(reverb);
-    synth.pan.value = pan;
-  
-    return synth;
-  };
-  
-  const initializeLoop = (synth) => {
-    return new Tone.Loop((time) => {
-      const chord = getRandomChord();
-      const duration = Tone.Time('2n') * Math.floor(Math.random() * 4) + 1;
-      synth.triggerAttackRelease(chord, duration, time);
-  
-      setTimeout(() => {
-        synth.disconnect();
-        synth.dispose();
-      }, duration * 1000 + 2000);
-    }, '8n');
-  };
-  
-  function getRandomDrumNote() {
-    // Implement your logic to generate a random drum note
-    // For example, you can use an array of available drum sounds and select one randomly
-    const availableDrumSounds = ["16n", "32n", "64n"];
-    return availableDrumSounds[Math.floor(Math.random() * availableDrumSounds.length)];
   }
 
   const handleRecordClick = () => {
@@ -1134,6 +837,7 @@ const Main = () => {
 
   const handleNewSongSelect = () => {
     console.log('handleNewSongSelect')
+    setIsEditingSong(true)
     createNewSong({title: enteredSearchText})
     setEnteredSearchText('')
     setIsShowingSearchResults(false)
@@ -1143,8 +847,6 @@ const Main = () => {
     console.log('createNewSong')
     
     // ToDo: display "Are you sure?"
-    
-    // router.push('/')
 
     // clear query params
     const { protocol, host, pathname } = window.location
@@ -1176,21 +878,6 @@ const Main = () => {
     updatedTracks[selectedTrackIndex].waveform = waveform;
     const updatedSong = { ...song, tracks: updatedTracks };
     setSong(updatedSong);
-  }
-  
-  const createNewSectionForAllTracks = () => {
-    const updatedTracks = song?.tracks?.map((track) => {
-      const updatedSections = [...track.sections];
-      updatedSections.push({
-        notes: getEmptyNotes(song)
-      });
-      return { ...track, sections: updatedSections };
-    });
-  
-    setSong({ ...song, tracks: updatedTracks });
-
-    // select select the new track
-    setSelectedSectionIndex(selectedSectionIndex + 1)
   }
 
   const selectSection = sectionIndex => {
@@ -1233,64 +920,6 @@ const Main = () => {
     setIsEditingKey(false)
   }
 
-  const keyToNote = {
-    a: 'C',
-    w: 'C#',
-    s: 'D',
-    e: 'D#',
-    d: 'E',
-    f: 'F',
-    t: 'F#',
-    g: 'G',
-    y: 'G#',
-    h: 'A',
-    u: 'A#',
-    j: 'B',
-    k: 'C+',
-    o: 'C#+',
-    l: 'D+',
-    p: 'D#+',
-    ';': 'B+',
-    "'": 'C++',
-  };
-  
-  const getNoteNameByStep = (step, keyNote) => {
-    console.log('getNoteNameByStep()')
-    console.log('step : ', step)
-    console.log('keyNote : ', keyNote)
-    const keyNoteIndex = Object.values(keyToNote).indexOf(keyNote);
-    const noteNames = Object.keys(keyToNote);
-  
-    // Calculate the index of the target note in the noteNames array
-    let targetNoteIndex = keyNoteIndex;
-    for (let i = 0; i < step.length; i++) {
-      if (step[i] === 'I') {
-        targetNoteIndex += 0;
-      } else if (step[i] === 'V') {
-        targetNoteIndex += 7;
-      } else if (step[i] === 'IV') {
-        targetNoteIndex += 5;
-      } else if (step[i] === 'II') {
-        targetNoteIndex += 2;
-      } else if (step[i] === 'III') {
-        targetNoteIndex += 4;
-      } else if (step[i] === 'VI') {
-        targetNoteIndex += 9;
-      } else if (step[i] === 'VII') {
-        targetNoteIndex += 11;
-      }
-    }
-  
-    // Wrap the target note index within the range of the noteNames array
-    targetNoteIndex %= noteNames.length;
-    if (targetNoteIndex < 0) {
-      targetNoteIndex += noteNames.length;
-    }
-  
-    // Return the note name corresponding to the target note index
-    return keyToNote[noteNames[targetNoteIndex]];
-  };  
-
   const handleGamepadButtonPress = (btnName) => {
     const noteAtIndex = song.tracks[selectedTrackIndex].sections[selectedSectionIndex].notes[selectedNoteIndex]
 
@@ -1329,8 +958,6 @@ const Main = () => {
           <meta name="twitter:title" content={song.title} />
           <meta name="twitter:description" content="Made in Landy Land" />
           <meta name="twitter:image" content={'/landy-land-og-share.png'} />
-          {/* <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" /> */}
-          {/* <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" /> */}
       </Head>
       <Content className="main">
 
@@ -1338,9 +965,7 @@ const Main = () => {
         {(isOnHomeTab && !isEditingSong) &&
         <HomeView>
           <PageTitle>Home</PageTitle>
-          <button onClick={e => { handleNewSongSelect();setIsEditingSong(true) }}>New Song</button>
-          <button onClick={(event) => {setSong({ ...song, type: 'ambient' }); setIsEditingSong(true)}}>Chill</button>
-          {/* <Authenticate/> */}
+          <button onClick={e => { handleNewSongSelect(); }}>New Song</button>
         </HomeView>
         }
         {isOnSearchTab &&
@@ -1455,10 +1080,6 @@ EditFilled,
             }
           </Col>
           <div id="song-container-content">
-            {/* <SongTypeSelect setSong={setSong} /> */}
-            { song.type === 'generative' ?
-            <Ambient />
-            : <div>
             <TrackContent>
                 {/* { isRecording
                 ? <RecordingButton id="record" onClick={handleRecordClick} className={isRecording ? 'is-recording' : 'not-recording'}></RecordingButton>
@@ -1467,42 +1088,14 @@ EditFilled,
                 
                 { song.tracks?.[selectedTrackIndex]?.sections &&
                   <SectionHolder>
-                    {/* <SectionEditor
-                      // time={time}
-                      section={song?.tracks[selectedTrackIndex]?.sections[selectedSectionIndex]}
-                      selectedNoteIndex={selectedNoteIndex}
-                      setSelectedNoteIndex={setSelectedNoteIndex}
-                    /> */}
                     <MusicNotesComponent
                       selectedNoteIndex={selectedNoteIndex}
                       updateSelectedNoteIndex={updateSelectedNoteIndex}
                       songData={song}
                       writeNoteAtIndex={writeNoteAtIndex}
-                      moveNote={moveNote}
                     />
                   </SectionHolder>
                 }
-                {/* <SectionTabs id="section-tabs-container">
-                  { song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
-                  <SectionTab
-                    key={sectionIndex}
-                    notes={section?.notes}
-                    isSelected={sectionIndex === selectedSectionIndex}
-                    onClick={() => {selectSection(sectionIndex)}}
-                  />
-                  ))}
-                  <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
-                </SectionTabs> */}
-                {/* <ProgramGrid
-                  song={song}
-                  setSong={setSong}
-                  selectedTrackIndex={selectedTrackIndex}
-                  selectedSectionIndex={selectedSectionIndex}
-                  selectedNoteIndex={selectedNoteIndex}
-                  setSelectedNoteIndex={setSelectedNoteIndex}
-                /> */}
-
-                {/* <InputTypeDropdown isOpen setIsOpen currentInputType handleInputTypeItemClick /> */}
 
                 { isShowingGamepad &&
                 <Gamepad instrumentType={song.tracks?.[selectedTrackIndex].type} handleButtonPress={handleGamepadButtonPress} />
@@ -1515,12 +1108,6 @@ EditFilled,
                 }
 
                 {/* <PianoKeys playNote={playNote} /> */}
-
-                {/* <div className="sheet-music">
-                    <div className="staff"></div>
-                    <div className="notes"></div>
-                    <div className="playhead"></div>
-                </div> */}
             </TrackContent>
             <TrackTypeSelect value={song.tracks?.[selectedTrackIndex]?.type} song={song} setSong={setSong} trackIndex={selectedTrackIndex} />
               <WaveformContainer>
@@ -1530,8 +1117,6 @@ EditFilled,
                 <WaveformButton id="pulse" className={`btn-waveform pulse ${selectedWaveform === 'pulse' ? 'selected' : ''}`} onClick={() => setWaveform('pulse')}><Image src="/icon-waveform-pulse.png" width="16" height="8" /></WaveformButton>
                 {/* <WaveformButton id="sine" className={`nes-btn btn-waveform sine ${selectedWaveform === 'sine' ? 'selected' : ''}`} onClick={() => setWaveform('sine')}>Sine</WaveformButton> */}
               </WaveformContainer>
-          </div>
-          }
           </div>
           <TracksAndSections id="tracks-and-sections">
               <TracksContainer id="tracks-container">
