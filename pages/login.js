@@ -20,7 +20,12 @@ const StyledForm = styled(Form)`
   margin: auto;
 `;
 
+const StyledInput = styled(Input)`
+  font-size: 16px; /* Ensure font size is at least 16px to prevent zoom */
+`;
+
 const FormButton = styled(Button)`
+  font-size: 16px; /* Ensure font size is at least 16px to prevent zoom */
   width: 100%;
 `;
 
@@ -86,14 +91,14 @@ const Login = () => {
             name="username"
             rules={[{ required: true, message: 'Please input your username!' }]}
           >
-            <Input placeholder="Username" />
+            <StyledInput placeholder="Username" autoCapitalize="none" />
           </Form.Item>
 
           <Form.Item
             name="password"
             rules={[{ required: true, message: 'Please input your password!' }]}
           >
-            <Input.Password placeholder="Password" />
+            <Input.Password placeholder="Password" autoCapitalize="none" />
           </Form.Item>
 
           <Form.Item>

@@ -554,6 +554,7 @@ const Main = () => {
     }
 
     const emptyNotes = Array.from({ length: numberOfNotesPerSection }, (_, index) => ({
+      "index: ": index,
       "time": null,
       "frequency": null,
       "noteName": null,
@@ -836,12 +837,22 @@ const Main = () => {
   }
 
   const handleNewSongSelect = () => {
-    console.log('handleNewSongSelect')
-    setIsEditingSong(true)
-    createNewSong({title: enteredSearchText})
-    setEnteredSearchText('')
-    setIsShowingSearchResults(false)
-  }
+    console.log('handleNewSongSelect');
+
+    // Prompt the user with window.confirm
+    const userConfirmed = window.confirm("Are you sure? Creating new content could lose any progress.");
+
+    if (userConfirmed) {
+        setIsEditingSong(true);
+        createNewSong({title: enteredSearchText});
+        setEnteredSearchText('');
+        setIsShowingSearchResults(false);
+    } else {
+        // User selected 'No', you can handle this case as needed
+        console.log('User canceled new song creation');
+    }
+};
+
 
   const createNewSong = ({title='New Song'}) => {
     console.log('createNewSong')
@@ -853,24 +864,7 @@ const Main = () => {
     const url = `${protocol}//${host}${pathname}`
     window.history.replaceState(null, null, url)
 
-    const updatedTracks = [ ...song?.tracks ]
-    updatedTracks.push({
-      title: `Track ${updatedTracks.length + 1}`,
-      notes: getEmptyNotes(song)
-    })
-    setSong({
-      "title": title,
-      "tracks": getEmptyNotes(song),
-      "keyLetter": "C",
-      "createdAt": "2022-04-20T20:16:00.515Z",
-      "timeSignature": "4/4",
-      "minorOrMajor": "minor",
-      "sectionProgression": [],
-      "userId": 1,
-      "chordProgression": [0,1,4,5],
-      // "id": "48b25161-e0f3-4650-abe4-1373f322b0cd",
-      "bpm": "166"
-  })
+    setSong(newSong)
   }
 
   const setWaveform = waveform => {
@@ -942,6 +936,7 @@ const Main = () => {
     <ThemeProvider theme={theme}>
       <Head>
           <title>Landy Land - {song.title || 'Content'}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
           <meta name="description" content="pixel-perfect platform for content creators" />
           <link rel="icon" href="/favicon.ico" sizes="16x16" />
           <link rel="icon" href="/favicon-32x32.png" sizes="32x32" />
