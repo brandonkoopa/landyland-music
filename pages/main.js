@@ -28,7 +28,7 @@ import SongTypeSelect from './components/SongTypeSelect'
 import TrackTypeSelect from './components/TrackTypeSelect'
 import Ambient from './components/Ambient'
 import SearchResult from './components/SearchResult'
-import { getFrequencyByLetter, getNoteNameByFrequency, getHalfStepsFromRoot } from './lib/noteHelpers';
+import { getFrequencyByLetter, getNoteNameByFrequency, getHalfStepsFromRoot } from '../lib/noteHelpers';
 
 import {
   SaveFilled,

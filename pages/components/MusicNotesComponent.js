@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { getFrequencyByLetter, getNoteNameByFrequency, getHalfStepsFromRoot } from '../lib/noteHelpers';
+import { getFrequencyByLetter, getNoteNameByFrequency, getHalfStepsFromRoot } from '../../lib/noteHelpers';
 
 
 const NoteSize = 16; // The size of each note
