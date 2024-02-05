@@ -1,0 +1,265 @@
+{
+  "id": null,
+  "createdAt": "2024-02-02T14:35:45.088Z",
+  "userId": 1,
+  "title": "New!",
+  "bpm": "166",
+  "keyLetter": "C",
+  "minorOrMajor": "minor",
+  "timeSignature": "4/4",
+  "chordProgression": [
+      0,
+      1,
+      4,
+      5
+  ],
+  "sectionProgression": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+  ],
+  "beat": [
+      0,
+      3,
+      3,
+      1,
+      3,
+      3
+  ],
+  "tracks": [
+      {
+          "title": "Bass",
+          "type": "strings",
+          "sections": [
+              {
+                  "notes": [
+                    
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    },
+                    {
+                      "time": null,
+                      "frequency": null,
+                      "noteName": null,
+                      "halfStepFromRoot": null
+                    }
+                  ]
+              }
+          ]
+      },
+      {
+          "title": "Drums",
+          "type": "drums",
+          "sections": [
+              {
+                  "notes": [
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    },
+                    {
+                      "stepFromRoot": null,
+                      "time": null,
+                      "noteName": null,
+                      "frequency": null
+                    }
+                  ]
+              }
+          ]
+      }
+  ]
+}

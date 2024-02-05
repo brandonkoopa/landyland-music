@@ -5,7 +5,7 @@ const theme = {
     appBackgroundColor: 'linear-gradient(#1E1F25, #2B3048)',
     songContainer: '#2D2D2D',
     controlIconColor: '#fff',
-    select: '#FFFF00',
+    selected: '#FFFF00',
     record: '#b21030',
     hover: '#FFFF00',
   },

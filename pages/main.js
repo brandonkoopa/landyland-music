@@ -8,8 +8,9 @@ import Image from 'next/image'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import PianoKeys from './ui_instruments/PianoKeys'
-import exampleSong from './json/example-song.json'
+import newSong from './json/new-song.json'
 import SectionEditor from './components/SectionEditor'
+import MusicNotesComponent from './components/MusicNotesComponent'
 import BoomboxHandle from './components/BoomboxHandle'
 import Skyline from './components/Skyline'
 import ProgramGrid from './ProgramGrid'
@@ -27,6 +28,7 @@ import SongTypeSelect from './components/SongTypeSelect'
 import TrackTypeSelect from './components/TrackTypeSelect'
 import Ambient from './components/Ambient'
 import SearchResult from './components/SearchResult'
+import { getFrequencyByLetter, getNoteNameByFrequency, getHalfStepsFromRoot } from './lib/noteHelpers';
 
 import {
   SaveFilled,
@@ -72,7 +74,7 @@ const SectionHolder = styled.div`
   width: 100%;
 `
 const SectionTabs = styled.div`
-  margin: 8px 0;
+  margin: 0;
 `
 const NewSectionTab = styled.span`
   border: 1px solid rgba(0,0,0,0);
@@ -148,11 +150,13 @@ const EditableTitle = styled.input`
   border: none;
   outline: none;
 `;
+
 const SongContainer = styled.div`
   background-color: ${props => props.theme.color.songContainer};
-  transform: translateY(34px);
+  transform: translateY(0px);
   /* padding: 8px; */
   transition: all 0.5s;
+  height: 100vh;
 
   &.collapsed {
     /* opacity: 0; */
@@ -226,7 +230,7 @@ const SongCaretButton = styled(Button)`
   }
 
   &:hover {
-    border-color: ${props => props?.theme?.color?.select || '#fff'};
+    border-color: ${props => props?.theme?.color?.selected || '#fff'};
   }
 
   :not(:disabled):active {
@@ -262,12 +266,13 @@ const TempoSlider = styled.input`
 const TracksAndSections = styled.div`
   display: grid;
   grid-template-columns: 150px 1fr;
+  margin-top: 8px
 `
 const SectionsContainer = styled.div`
 
 `
 const TracksContainer = styled.ul`
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
   list-style-type: none; // This removes the default list styling
 `;
@@ -284,6 +289,7 @@ const TrackTab = styled.li`
   background-color: #666;
   user-select: none;
   cursor: pointer;
+  height: 40;x
 
   &.selected {
     background-color: transparent;
@@ -321,7 +327,7 @@ const SearchResultsContainer = styled.div`
 
 const Main = () => {
   const router = useRouter()
-  const [song, setSong] = useState(exampleSong)
+  const [song, setSong] = useState(newSong)
   const [time, setTime] = useState(0)
   const [allPossibleTrackTypes, setAllPossibleTrackTypes] = useState(['drums', 'keys', 'strings'])
   const [isEditingSongArt, setIsEditingSongArt] = useState(true)
@@ -367,7 +373,18 @@ const Main = () => {
   const apiBaseUrl = 'https://ifi0sj8zv9.execute-api.us-east-2.amazonaws.com/dev'
 
   useEffect(() => {
-    loadSongFromUrl()
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSongId = urlParams.get('song_id');
+
+    if (urlSongId) {
+      // there's a song id in the url
+      loadSongFromUrl()
+    } {
+      // there is not a song id in the url
+      // create new song
+      createNewSong({title: enteredSearchText})
+    }
+
     
     console.log('try midi...')
     if (navigator.requestMIDIAccess) {
@@ -387,6 +404,29 @@ const Main = () => {
     //   clearInterval(interval);
     // };
   }, []);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      console.log('selectedNoteIndex : ', selectedNoteIndex)
+      handleKeyDown(e, selectedNoteIndex); // Pass selectedNoteIndex to handleKeyDown
+    };
+  
+    window.addEventListener('keydown', handleGlobalKeyDown);
+  
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [selectedNoteIndex]); // Include selectedNoteIndex in the dependency array  
+
+  useEffect(() => {
+    console.log('Selected Note Index updated:', selectedNoteIndex);
+  }, [selectedNoteIndex]); // This will log every time selectedNoteIndex changes
+
+  const updateSelectedNoteIndex = (index) => {
+    console.log('trying to set selectedSectionIndex to ', index)
+    // setSelectedSectionIndex(index)
+    setSelectedNoteIndex(index)
+  }
 
   useEffect(() => {
     console.log('song : ', song)
@@ -495,38 +535,6 @@ const Main = () => {
     return 440 * Math.pow(2, (note - 69) / 12);
   };
 
-  const getFrequencyByLetter = (note) => {
-    const notes = {
-      C: 261.63,
-      'C#': 277.18,
-      D: 293.66,
-      'D#': 311.13,
-      E: 329.63,
-      F: 349.23,
-      'F#': 369.99,
-      G: 392.00,
-      'G#': 415.30,
-      A: 440.00,
-      'A#': 466.16,
-      B: 493.88,
-      'C+': 523.25,
-      'C#+': 554.37,
-      'D+': 587.33,
-      'D#+': 622.25,
-      'E+': 659.25,
-      'F+': 698.46,
-      'F#+': 739.99,
-      'G+': 783.99,
-      'G#+': 830.61,
-      'A+': 880.00,
-      'A#+': 932.33,
-      'B+': 987.77,
-      'C++': 1046.50,
-    };
-    
-    return notes[note];
-  };
-
   const playMidiNote = (note) => {
     console.log("Played MIDI note:", note)
     // playNote(note.frequency)
@@ -551,12 +559,13 @@ const Main = () => {
 
   const loadSongFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const songId = urlParams.get('song_id');
-    loadSongFromServerById(songId)
+    const urlSongId = urlParams.get('song_id');
+    if (urlSongId) {
+      loadSongFromServerById(urlSongId)
+    }
   }
 
   const loadSongFromServerById = (songId) => {
-    console.log('songId : ', songId)
     if (songId) {
       fetch(`${apiBaseUrl}/song/${songId}`)
         .then(response => response.json())
@@ -658,7 +667,7 @@ const Main = () => {
       };
 
   // function to play note
-  function playNote(frequency) {
+  const playNote = frequency => {
     //create a synth and connect it to the main output (your speakers)
     // const newSynth = new Tone.Synth().toDestination();
     const newSynth = new Tone.Synth({
@@ -689,6 +698,7 @@ const Main = () => {
       //     })
       // }
 
+
     if (selectedNoteIndex) {
       writeNoteAtIndex({index: selectedNoteIndex, note: {
         time: currentTime,
@@ -698,13 +708,69 @@ const Main = () => {
     }
   }
 
-  const writeNoteAtIndex = ({index, note}) => {
-    console.log('writeNoteAtIndex(', index)
-    const updatedTracks = [ ...song?.tracks ]
-    updatedTracks[selectedTrackIndex].sections[selectedSectionIndex].notes[index] = note
-    // updatedTracks.push(note)
-    setSong({ ...song, tracks: updatedTracks })
-  }
+  // Define moveNote here
+  const moveNote = (originalIndex, newIndex) => {
+  setSong((prevSongData) => {
+    const updatedTracks = JSON.parse(JSON.stringify(prevSongData.tracks));
+    const sectionNotes = updatedTracks[0].sections[0].notes;
+
+    // Check if the note at the original index exists
+    if (sectionNotes[originalIndex]) {
+      // Extract the note to move
+      const noteToMove = { ...sectionNotes[originalIndex] };
+
+      // Update the note's index
+      noteToMove.index = newIndex;
+
+      // Set the moved note at the new index
+      sectionNotes[newIndex] = noteToMove;
+
+      // Remove the original note by setting it to null
+      sectionNotes[originalIndex] = null;
+    } else {
+      console.error('No note found at the original index:', originalIndex);
+    }
+
+    return { ...prevSongData, tracks: updatedTracks };
+  });
+};
+
+  const writeNoteAtIndex = ({ index, note }) => {
+    // If note is null, clear the note at the given index
+    if (!note) {
+      const updatedTracks = [...song.tracks];
+      updatedTracks[selectedTrackIndex].sections[selectedSectionIndex].notes[index] = null;
+      setSong({ ...song, tracks: updatedTracks });
+      return;
+    }
+
+    // Calculate the root frequency based on the keyLetter
+    const rootNote = song.keyLetter.toUpperCase() + (note.octave || '');
+    const rootFrequency = getFrequencyByLetter(rootNote);
+
+    // Use the getNoteNameByFrequency function to find the note name
+    const noteName = getNoteNameByFrequency(note.frequency);
+
+    // Calculate the half steps from the root note
+    const halfStepFromRoot = getHalfStepsFromRoot(note.frequency, rootFrequency);
+
+    // Clone the song tracks to avoid direct state mutation
+    const updatedTracks = [...song.tracks];
+
+    // Create the updated note object, ensuring it has all the necessary properties
+    const updatedNote = {
+      ...note,
+      index: index, // Ensure the index is set
+      halfStepFromRoot: halfStepFromRoot, // Set the calculated half steps from root
+      noteName: noteName // Use the note name from getNoteNameByFrequency
+    };
+
+    // Replace the note at the given index with the updated note object
+    updatedTracks[selectedTrackIndex].sections[selectedSectionIndex].notes[index] = updatedNote;
+
+    // Update the song state with the modified tracks
+    setSong({ ...song, tracks: updatedTracks });
+  };
 
   const writeNoteToSong = note => {
     const updatedTracks = [ ...song?.tracks, note ]
@@ -757,39 +823,6 @@ const Main = () => {
               playNote(frequency);
           }, (time - currentTime) * 1000);
       });
-  }
-  
-  function getNoteNameByFrequency(frequency) {
-    const noteFrequencies = {
-      'c': 261.63,
-      'c-sharp': 277.18,
-      'd': 293.66,
-      'd-sharp': 311.13,
-      'e': 329.63,
-      'f': 349.23,
-      'f-sharp': 369.99,
-      'g': 392.00,
-      'g-sharp': 415.30,
-      'a': 440.00,
-      'a-sharp': 466.16,
-      'b': 493.88,
-      'high-c': 523.25,
-      'high-c-sharp': 554.37,
-      'high-d': 587.33,
-      'high-d-sharp': 622.25,
-      'high-e': 659.25,
-      'high-f': 698.46,
-      'high-f-sharp': 739.99,
-      'high-g': 783.99,
-      'high-g-sharp': 830.61,
-      'high-a': 880.00
-    };
-  
-    const noteFrequenciesArray = Object.entries(noteFrequencies);
-    const closestNote = noteFrequenciesArray.reduce((prev, curr) => {
-      return (Math.abs(curr[1] - frequency) < Math.abs(prev[1] - frequency) ? curr : prev);
-    });
-    return closestNote[0];
   }
 
   const togglePlaySong = songToPlay => {
@@ -1027,6 +1060,7 @@ const Main = () => {
 
   const handleKeyDown = event => {
     var key = event.key.toLowerCase();
+    console.log('selectedNoteIndex : ', selectedNoteIndex)
     if (key in keyMap) {
         playNote(keyMap[key]);
     }
@@ -1109,7 +1143,7 @@ const Main = () => {
     
     // ToDo: display "Are you sure?"
     
-    router.push('/')
+    // router.push('/')
 
     // clear query params
     const { protocol, host, pathname } = window.location
@@ -1297,7 +1331,8 @@ const Main = () => {
           {/* <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" /> */}
           {/* <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" /> */}
       </Head>
-      <Content className="main" onKeyDown={handleKeyDown}>
+      <Content className="main">
+
         <Skyline type="city" />
         {(isOnHomeTab && !isEditingSong) &&
         <HomeView>
@@ -1356,7 +1391,7 @@ const Main = () => {
           <PageTitle>Profile</PageTitle>
         </ProfileView>
         }
-        <SongContainer className={!isEditingSong ? 'collapsed' : ''}>
+        <SongContainer id="content-container" className={!isEditingSong ? 'collapsed' : ''}>
           <BoomboxHandleRow><div></div><HandleHolder onClick={() => {setIsEditingSong(!isEditingSong)}}><BoomboxHandle/></HandleHolder><div></div></BoomboxHandleRow>
           <SongEditingHeader className={isEditingSong ? 'editing' : ''}>
             <SongCaretButton type="link" onClick={() => {setIsEditingSong(!isEditingSong)}}>
@@ -1431,11 +1466,18 @@ EditFilled,
                 
                 { song.tracks?.[selectedTrackIndex]?.sections &&
                   <SectionHolder>
-                    <SectionEditor
+                    {/* <SectionEditor
                       // time={time}
                       section={song?.tracks[selectedTrackIndex]?.sections[selectedSectionIndex]}
                       selectedNoteIndex={selectedNoteIndex}
                       setSelectedNoteIndex={setSelectedNoteIndex}
+                    /> */}
+                    <MusicNotesComponent
+                      selectedNoteIndex={selectedNoteIndex}
+                      updateSelectedNoteIndex={updateSelectedNoteIndex}
+                      songData={song}
+                      writeNoteAtIndex={writeNoteAtIndex}
+                      moveNote={moveNote}
                     />
                   </SectionHolder>
                 }
@@ -1504,17 +1546,18 @@ EditFilled,
                 <TrackTab onClick={() => {createNewTrack()}}>+</TrackTab>
               </TracksContainer>
               <SectionsContainer>
-                <SectionTabs id="section-tabs-container">
-                    { song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
-                    <SectionTab
-                      key={sectionIndex}
-                      notes={section?.notes}
-                      isSelected={sectionIndex === selectedSectionIndex}
-                      onClick={() => {selectSection(sectionIndex)}}
-                    />
-                    ))}
-                    <NewSectionTab onClick={() => {createNewSectionForAllTracks()}}>+</NewSectionTab>
-                </SectionTabs>
+              <SectionTabs id="section-tabs-container">
+                {song.tracks?.[selectedTrackIndex]?.sections?.map((section, sectionIndex) => (
+                  <SectionTab
+                    key={sectionIndex}
+                    notes={section?.notes}
+                    isSelected={sectionIndex === selectedSectionIndex}
+                    onClick={() => { selectSection(sectionIndex) }}
+                  />
+                ))}
+                <NewSectionTab onClick={() => { createNewSectionForSelectedTrack() }}>+</NewSectionTab>
+              </SectionTabs>
+
               </SectionsContainer>
             </TracksAndSections>
         </SongContainer>
