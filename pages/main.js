@@ -157,6 +157,7 @@ const SongContainer = styled.div`
   /* padding: 8px; */
   transition: all 0.5s;
   height: 100vh;
+  overflow: hidden;
 
   &.collapsed {
     /* opacity: 0; */
