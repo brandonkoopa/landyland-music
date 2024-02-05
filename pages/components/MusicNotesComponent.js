@@ -50,7 +50,7 @@ const GhostNote = styled.div`
 
 
 const MusicNotesComponent = ({
-  songData,
+  songData = { tracks: [{ sections: [{ notes: [] }] }] }, // Default empty structure
   selectedNoteIndex,
   updateSelectedNoteIndex,
   writeNoteAtIndex, // You will pass this function as a prop from the parent component
@@ -68,7 +68,7 @@ const MusicNotesComponent = ({
 
 
   // Determine the notes to display from the songData
-  const sectionNotes = songData.tracks[0].sections[0].notes;
+  const sectionNotes = songData?.tracks?.[0]?.sections?.[0]?.notes || [];
 
   // Create an array to represent the grid
   const notesGrid = Array.from({ length: GridSize * GridSize }, () => null);
